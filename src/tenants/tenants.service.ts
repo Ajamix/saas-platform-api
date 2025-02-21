@@ -14,25 +14,13 @@ export class TenantsService {
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
-    private readonly activityLogsService: ActivityLogsService,
   ) {}
 
   async create(createTenantDto: CreateTenantDto, user: User, request?: Request): Promise<Tenant> {
     const tenant = this.tenantRepository.create(createTenantDto);
     const savedTenant = await this.tenantRepository.save(tenant);
 
-    // Log the activity
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Created new tenant',
-      ActivityType.CREATE,
-      {
-        tenantId: savedTenant.id,
-        tenantName: savedTenant.name,
-        subdomain: savedTenant.subdomain
-      },
-      request
-    );
+
 
     return savedTenant;
   }
@@ -129,19 +117,7 @@ export class TenantsService {
     const updatedTenant = await this.tenantRepository.save(tenant);
 
     // Log the activity
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant',
-      ActivityType.UPDATE,
-      {
-        tenantId: id,
-        changes: {
-          previous: previousValues,
-          current: updateTenantDto
-        }
-      },
-      request
-    );
+
 
     return updatedTenant;
   }
@@ -154,17 +130,6 @@ export class TenantsService {
       throw new NotFoundException(`Tenant with ID "${id}" not found`);
     }
 
-    // Log the activity
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Deleted tenant',
-      ActivityType.DELETE,
-      {
-        tenantId: id,
-        tenantName: tenant.name,
-        subdomain: tenant.subdomain
-      },
-      request
-    );
+
   }
 }
