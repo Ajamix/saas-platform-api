@@ -5,11 +5,17 @@ import { SubscriptionsController } from './subscriptions.controller';
 import { Subscription } from './entities/subscription.entity';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { SuperAdminModule } from '../super-admin/super-admin.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UsersModule } from '../users/users.module';
+import { TenantsModule } from '../tenants/tenants.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Subscription, SubscriptionPlan]),
     SuperAdminModule,
+    NotificationsModule,
+    UsersModule,
+    TenantsModule,
   ],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService],

@@ -6,17 +6,28 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { User } from '../users/entities/user.entity';
 import { Profile } from './entities/profile.entity';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { CreateProfileSchema, ProfileResponseSchema } from '../swagger/schemas/profile.schema';
 
 interface RequestWithUser extends Request {
   user: User;
 }
 
+@ApiTags('Profiles')
 @Controller('profiles')
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class ProfilesController {
   constructor(private readonly profilesService: ProfilesService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create user profile' })
+  @ApiBody({ schema: CreateProfileSchema })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Profile created successfully',
+    schema: ProfileResponseSchema
+  })
   async create(@Body() createProfileDto: CreateProfileDto, @Req() request: RequestWithUser) {
     return this.profilesService.create(createProfileDto, request.user, request);
   }

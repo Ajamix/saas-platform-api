@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsService } from './notifications.service';
 import { SettingsModule } from '../settings/settings.module';
@@ -9,26 +9,19 @@ import { NotificationsGateway } from './notifications.gateway';
 import { PushNotificationsService } from './push/push-notifications.service';
 import { PushSubscription } from './push/entities/push-subscription.entity';
 import { EmailTemplatesService } from '../email/templates/email-templates.service';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
-
+import { WebSocketAuthModule } from '../websocket/auth/websocket-auth.module';
+console.log('NotificationsModule Loaded');
 @Module({
   imports: [
     TypeOrmModule.forFeature([Notification, PushSubscription]),
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get('JWT_SECRET'),
-        signOptions: {
-          expiresIn: configService.get('JWT_EXPIRATION') || '1d',
-        },
-      }),
-    }),
+    ConfigModule,
+    WebSocketAuthModule,
     SettingsModule,
     EmailModule,
     ActivityLogsModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
   ],
   providers: [
     NotificationsService,
@@ -38,4 +31,4 @@ import { UsersModule } from '../users/users.module';
   ],
   exports: [NotificationsService],
 })
-export class NotificationsModule {} 
+export class NotificationsModule {}

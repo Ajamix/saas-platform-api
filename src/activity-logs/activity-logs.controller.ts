@@ -6,8 +6,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
 import { Request } from 'express';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { User } from '../users/entities/user.entity';
+import { ActivityLog } from './entities/activity-log.entity';
+import { CreateActivityLogSchema, ActivityLogResponseSchema } from '../swagger/schemas/activity-log.schema';
 
 interface RequestWithUser extends Request {
   user: User;
@@ -21,6 +23,13 @@ export class ActivityLogsController {
   constructor(private readonly activityLogsService: ActivityLogsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create activity log' })
+  @ApiBody({ schema: CreateActivityLogSchema })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Activity log created successfully',
+    schema: ActivityLogResponseSchema
+  })
   create(@Body() createActivityLogDto: CreateActivityLogDto) {
     return this.activityLogsService.create(createActivityLogDto);
   }
@@ -28,7 +37,13 @@ export class ActivityLogsController {
   @Get()
   @UseGuards(SuperAdminGuard)
   @ApiOperation({ summary: 'Get all activity logs (Super Admin only)' })
-  @ApiResponse({ status: 200, description: 'Returns all activity logs' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns all activity logs',
+    type: [ActivityLog]
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Requires Super Admin' })
   findAll() {
     return this.activityLogsService.findAll();
   }
@@ -36,15 +51,25 @@ export class ActivityLogsController {
   @Get('tenant')
   @UseGuards(TenantGuard)
   @ApiOperation({ summary: 'Get tenant activity logs' })
-  @ApiResponse({ status: 200, description: 'Returns activity logs for the current tenant' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns activity logs for the current tenant',
+    type: [ActivityLog]
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Requires Tenant Access' })
   findTenantLogs(@Req() request: RequestWithUser) {
     return this.activityLogsService.findByTenant(request.user.tenantId);
   }
 
   @Get('user')
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get user activity logs' })
-  @ApiResponse({ status: 200, description: 'Returns activity logs for the current user' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns activity logs for the current user',
+    type: [ActivityLog]
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   findUserLogs(@Req() request: RequestWithUser) {
     return this.activityLogsService.findByUser(request.user.id);
   }

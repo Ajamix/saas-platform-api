@@ -1,41 +1,57 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { join } from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 
 @Injectable()
-export class EmailTemplatesService {
+export class EmailTemplatesService implements OnModuleInit {
   private templates: Map<string, Handlebars.TemplateDelegate> = new Map();
-  private readonly templatesDir = join(__dirname, 'views');
+  private readonly templatesDir: string;
 
   constructor() {
+    // Use src in development and dist in production
+    const baseDir = process.env.NODE_ENV === 'production' ? 'dist' : 'src';
+    this.templatesDir = join(process.cwd(), 'backend', baseDir, 'email', 'templates', 'views');
+  }
+
+  async onModuleInit() {
     this.loadTemplates();
     this.registerHelpers();
   }
 
   private loadTemplates() {
-    const templates = {
-      'user-registration': this.loadTemplate('user-registration.hbs'),
-      'password-reset': this.loadTemplate('password-reset.hbs'),
-      'subscription-change': this.loadTemplate('subscription-change.hbs'),
-      'payment-reminder': this.loadTemplate('payment-reminder.hbs'),
-      'system-update': this.loadTemplate('system-update.hbs'),
-      'role-change': this.loadTemplate('role-change.hbs'),
-      'team-update': this.loadTemplate('team-update.hbs'),
+    const templateFiles = {
+      'user-registration': 'user-registration.hbs',
+      'password-reset': 'password-reset.hbs',
+      'subscription-change': 'subscription-change.hbs',
+      'payment-reminder': 'payment-reminder.hbs',
+      'system-update': 'system-update.hbs',
+      'role-change': 'role-change.hbs',
+      'team-update': 'team-update.hbs',
     };
 
-    Object.entries(templates).forEach(([name, template]) => {
-      this.templates.set(name, Handlebars.compile(template));
-    });
-  }
-
-  private loadTemplate(filename: string): string {
-    return readFileSync(join(this.templatesDir, filename), 'utf-8');
+    for (const [name, file] of Object.entries(templateFiles)) {
+      try {
+        const templatePath = join(this.templatesDir, file);
+        if (existsSync(templatePath)) {
+          const template = readFileSync(templatePath, 'utf-8');
+          this.templates.set(name, Handlebars.compile(template));
+        } else {
+          console.warn(`Template file not found: ${templatePath}`);
+          // Set a default template as fallback
+          this.templates.set(name, Handlebars.compile(this.getDefaultTemplate(name)));
+        }
+      } catch (error) {
+        console.error(`Error loading template ${name}:`, error);
+        // Set a default template as fallback
+        this.templates.set(name, Handlebars.compile(this.getDefaultTemplate(name)));
+      }
+    }
   }
 
   private registerHelpers() {
     Handlebars.registerHelper('formatDate', function(date: Date) {
-      return date.toLocaleDateString();
+      return date ? date.toLocaleDateString() : '';
     });
 
     Handlebars.registerHelper('formatCurrency', function(amount: number) {
@@ -44,6 +60,37 @@ export class EmailTemplatesService {
         currency: 'USD',
       }).format(amount);
     });
+  }
+
+  private getDefaultTemplate(type: string): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; padding: 20px 0; }
+    .content { background: #f9f9f9; padding: 20px; border-radius: 5px; }
+    .footer { text-align: center; padding: 20px 0; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>{{title}}</h2>
+    </div>
+    <div class="content">
+      <p>Hello {{firstName}},</p>
+      <p>{{message}}</p>
+    </div>
+    <div class="footer">
+      <p>&copy; {{year}} {{companyName}}. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`;
   }
 
   renderTemplate(templateKey: string, context: Record<string, any>): string {

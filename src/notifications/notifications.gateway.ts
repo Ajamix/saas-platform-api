@@ -7,9 +7,10 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { UseGuards } from '@nestjs/common';
-import { WsJwtGuard } from '../auth/guards/ws-jwt.guard';
+import { WebSocketAuthGuard } from '../websocket/auth/websocket-auth.guard';
 import { WsAuthUser } from '../auth/decorators/ws-auth-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { WebSocketAuthService } from '../websocket/auth/websocket-auth.service';
 
 @WebSocketGateway({
   cors: {
@@ -24,7 +25,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
 
   private userSockets: Map<string, Set<string>> = new Map();
 
-  @UseGuards(WsJwtGuard)
+  constructor(private readonly wsAuthService: WebSocketAuthService) {}
+
+  @UseGuards(WebSocketAuthGuard)
   async handleConnection(client: Socket) {
     const user = client.handshake.auth.user as User;
     if (!user) {
@@ -37,6 +40,9 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       this.userSockets.set(user.id, new Set());
     }
     this.userSockets.get(user.id)!.add(client.id);
+
+    // Store user in auth service cache
+    this.wsAuthService.storeUser(user.id, user);
 
     // Join user-specific room and tenant room if applicable
     client.join(`user:${user.id}`);
@@ -53,19 +59,19 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
         userSocketIds.delete(client.id);
         if (userSocketIds.size === 0) {
           this.userSockets.delete(user.id);
+          this.wsAuthService.removeUser(user.id);
         }
       }
     }
   }
 
   @SubscribeMessage('markAsRead')
-  @UseGuards(WsJwtGuard)
+  @UseGuards(WebSocketAuthGuard)
   async handleMarkAsRead(
     @WsAuthUser() user: User,
     payload: { notificationId: string },
   ) {
     // Handle marking notification as read
-    // Implementation will be added in the NotificationsService
     return { success: true };
   }
 

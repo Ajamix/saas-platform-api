@@ -15,13 +15,50 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create new user' })
+  @ApiBody({
+    schema: {
+      example: {
+        email: "newuser@company.com",
+        password: "securePass123!",
+        firstName: "New",
+        lastName: "User",
+        isActive: true,
+        tenantId: "123e4567-e89b-12d3-a456-426614174000",
+        roleIds: ["123e4567-e89b-12d3-a456-426614174000"]
+      }
+    }
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User created successfully',
+    schema: {
+      example: {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        email: "newuser@company.com",
+        firstName: "New",
+        lastName: "User",
+        isActive: true,
+        tenantId: "123e4567-e89b-12d3-a456-426614174000",
+        roles: [
+          {
+            id: "123e4567-e89b-12d3-a456-426614174000",
+            name: "Editor",
+            description: "Can edit content"
+          }
+        ]
+      }
+    }
+  })
   async create(@Body() createUserDto: CreateUserDto, @Request() req) {
     // Only super admin can create users for any tenant
     // Regular users can only create users for their own tenant

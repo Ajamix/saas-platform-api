@@ -10,19 +10,30 @@ import {
   Request,
   ForbiddenException,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
+import { CreateTenantSchema, TenantResponseSchema } from '../swagger/schemas/tenant.schema';
 
+@ApiTags('Tenants')
 @Controller('tenants')
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Post()
   @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Create new tenant' })
+  @ApiBody({ schema: CreateTenantSchema })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Tenant created successfully',
+    schema: TenantResponseSchema
+  })
   async create(@Body() createTenantDto: CreateTenantDto) {
     return this.tenantsService.create(createTenantDto);
   }

@@ -1,15 +1,11 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { UsersService } from '../../users/users.service';
+import { WebSocketAuthService } from './websocket-auth.service';
 
 @Injectable()
-export class WsJwtGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
-  ) {}
+export class WebSocketAuthGuard implements CanActivate {
+  constructor(private readonly wsAuthService: WebSocketAuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
@@ -20,8 +16,8 @@ export class WsJwtGuard implements CanActivate {
         throw new WsException('Unauthorized');
       }
 
-      const payload = await this.jwtService.verifyAsync(token);
-      const user = await this.usersService.findOne(payload.sub);
+      const payload = await this.wsAuthService.verifyToken(token);
+      const user = this.wsAuthService.getUser(payload.sub);
 
       if (!user) {
         throw new WsException('User not found');
@@ -38,11 +34,7 @@ export class WsJwtGuard implements CanActivate {
 
   private extractToken(client: Socket): string | undefined {
     const auth = client.handshake.auth.token || client.handshake.headers.authorization;
-    
-    if (!auth) {
-      return undefined;
-    }
-
+    if (!auth) return undefined;
     const [type, token] = auth.split(' ');
     return type === 'Bearer' ? token : undefined;
   }

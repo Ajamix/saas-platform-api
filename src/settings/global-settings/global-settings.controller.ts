@@ -7,7 +7,8 @@ import { SuperAdminGuard } from '../../super-admin/guards/super-admin.guard';
 import { Request } from 'express';
 import { User } from '../../users/entities/user.entity';
 import { GlobalSetting } from './entities/global-setting.entity';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { GlobalSettingsSchema } from '../../swagger/schemas/settings.schema';
 
 interface RequestWithUser extends Request {
   user: User;
@@ -22,7 +23,12 @@ export class GlobalSettingsController {
 
   @Post()
   @ApiOperation({ summary: 'Create global settings' })
-  @ApiResponse({ status: 201, description: 'Global settings created successfully' })
+  @ApiBody({ schema: GlobalSettingsSchema })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Global settings created successfully',
+    schema: GlobalSettingsSchema
+  })
   async create(@Body() createGlobalSettingDto: CreateGlobalSettingDto, @Req() request: RequestWithUser) {
     return this.globalSettingsService.create(createGlobalSettingDto, request.user, request);
   }

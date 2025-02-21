@@ -7,7 +7,8 @@ import { TenantGuard } from '../../tenants/guards/tenant.guard';
 import { Request } from 'express';
 import { User } from '../../users/entities/user.entity';
 import { TenantSetting } from './entities/tenant-setting.entity';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { TenantSettingsSchema } from '../../swagger/schemas/settings.schema';
 
 interface RequestWithUser extends Request {
   user: User;
@@ -22,7 +23,12 @@ export class TenantSettingsController {
 
   @Post()
   @ApiOperation({ summary: 'Create tenant settings' })
-  @ApiResponse({ status: 201, description: 'Tenant settings created successfully' })
+  @ApiBody({ schema: TenantSettingsSchema })
+  @ApiResponse({ 
+    status: 201, 
+    description: 'Tenant settings created successfully',
+    schema: TenantSettingsSchema
+  })
   async create(@Body() createTenantSettingDto: CreateTenantSettingDto, @Req() request: RequestWithUser) {
     return this.tenantSettingsService.create(createTenantSettingDto, request.user, request);
   }
