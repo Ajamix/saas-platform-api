@@ -1,6 +1,8 @@
 # Multi-Tenant SaaS Platform API
 
-A robust and scalable SaaS platform backend built with NestJS, featuring multi-tenancy, authentication, role-based access control, and real-time notifications.
+A scalable SaaS platform backend built with NestJS, featuring multi-tenancy, authentication, role-based access control, and real-time notifications.
+This a proof of concept madea all using CursorAI.
+
 
 <p align="center">
   <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" />
