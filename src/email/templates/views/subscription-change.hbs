@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .content {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 5px;
+    }
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .plan-details {
+      background: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px 0;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>Subscription Update</h2>
+    </div>
+    <div class="content">
+      <p>Hello {{firstName}},</p>
+      
+      {{#if isUpgrade}}
+      <p>Thank you for upgrading your subscription with {{companyName}}!</p>
+      {{else}}
+      <p>Your subscription with {{companyName}} has been updated.</p>
+      {{/if}}
+      
+      <div class="plan-details">
+        <h3>New Plan Details:</h3>
+        <p><strong>Plan:</strong> {{newPlan.name}}</p>
+        <p><strong>Price:</strong> {{formatCurrency newPlan.price}}/{{newPlan.interval}}</p>
+        <p><strong>Effective From:</strong> {{formatDate effectiveDate}}</p>
+        
+        {{#if newPlan.features}}
+        <h4>Features included:</h4>
+        <ul>
+          {{#each newPlan.features}}
+          <li>{{this}}</li>
+          {{/each}}
+        </ul>
+        {{/if}}
+      </div>
+      
+      <p>Your next billing date will be {{formatDate nextBillingDate}}.</p>
+      
+      <p style="text-align: center;">
+        <a href="{{billingUrl}}" class="button">View Billing Details</a>
+      </p>
+      
+      <p>If you have any questions about your subscription or need assistance, please contact our support team at {{supportEmail}}.</p>
+    </div>
+    <div class="footer">
+      <p>&copy; {{year}} {{companyName}}. All rights reserved.</p>
+      <p>This email was sent to {{email}} regarding your subscription update.</p>
+    </div>
+  </div>
+</body>
+</html> 

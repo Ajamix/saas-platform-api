@@ -1,0 +1,251 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
+import { Tenant } from '../../tenants/entities/tenant.entity';
+import { Subscription } from '../../subscriptions/entities/subscription.entity';
+import { SubscriptionPlan } from '../../subscriptions/entities/subscription-plan.entity';
+
+interface PlanStats {
+  plan: string;
+  count: number;
+  revenue: number;
+}
+
+interface GrowthStat {
+  period: string;
+  count: number;
+}
+
+interface RevenueStat {
+  period: string;
+  revenue: number;
+}
+
+@Injectable()
+export class AdminDashboardService {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepository: Repository<Tenant>,
+    @InjectRepository(Subscription)
+    private readonly subscriptionRepository: Repository<Subscription>,
+    @InjectRepository(SubscriptionPlan)
+    private readonly subscriptionPlanRepository: Repository<SubscriptionPlan>,
+  ) {}
+
+  async getDashboardStats() {
+    const [
+      totalUsers,
+      totalTenants,
+      activeSubscriptions,
+      totalRevenue,
+      recentTenants,
+      subscriptionsByPlan,
+      activeTenantsCount,
+      inactiveTenantsCount
+    ] = await Promise.all([
+      // Total users count
+      this.userRepository.count(),
+      
+      // Total tenants count
+      this.tenantRepository.count(),
+      
+      // Active subscriptions count
+      this.subscriptionRepository.count({
+        where: { status: 'active' }
+      }),
+      
+      // Total revenue calculation
+      this.calculateTotalRevenue(),
+      
+      // Recent tenants
+      this.tenantRepository.find({
+        take: 5,
+        order: { createdAt: 'DESC' },
+        relations: ['users']
+      }),
+      
+      // Subscriptions grouped by plan
+      this.getSubscriptionsByPlan(),
+      
+      // Active tenants count
+      this.tenantRepository.count({
+        where: { isActive: true }
+      }),
+      
+      // Inactive tenants count
+      this.tenantRepository.count({
+        where: { isActive: false }
+      })
+    ]);
+
+    return {
+      overview: {
+        totalUsers,
+        totalTenants,
+        activeSubscriptions,
+        totalRevenue,
+        activeTenantsCount,
+        inactiveTenantsCount
+      },
+      recentTenants,
+      subscriptionsByPlan,
+    };
+  }
+
+  private async calculateTotalRevenue(): Promise<number> {
+    const activeSubscriptions = await this.subscriptionRepository.find({
+      where: { status: 'active' },
+      relations: ['plan']
+    });
+
+    return activeSubscriptions.reduce((total, subscription) => {
+      return total + (subscription.plan?.price || 0);
+    }, 0);
+  }
+
+  private async getSubscriptionsByPlan(): Promise<PlanStats[]> {
+    const plans = await this.subscriptionPlanRepository.find();
+    const result: PlanStats[] = [];
+
+    for (const plan of plans) {
+      const count = await this.subscriptionRepository.count({
+        where: {
+          planId: plan.id,
+          status: 'active'
+        }
+      });
+
+      result.push({
+        plan: plan.name,
+        count,
+        revenue: count * plan.price
+      });
+    }
+
+    return result;
+  }
+
+  async getTenantGrowthStats(period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
+    const now = new Date();
+    const startDate = new Date();
+
+    switch (period) {
+      case 'daily':
+        startDate.setDate(startDate.getDate() - 30); // Last 30 days
+        break;
+      case 'weekly':
+        startDate.setDate(startDate.getDate() - 12 * 7); // Last 12 weeks
+        break;
+      case 'monthly':
+        startDate.setMonth(startDate.getMonth() - 12); // Last 12 months
+        break;
+    }
+
+    const tenants = await this.tenantRepository.createQueryBuilder('tenant')
+      .where('tenant.createdAt >= :startDate', { startDate })
+      .andWhere('tenant.createdAt <= :endDate', { endDate: now })
+      .getMany();
+
+    return this.aggregateGrowthStats(tenants, period, startDate, now);
+  }
+
+  private aggregateGrowthStats(tenants: Tenant[], period: string, startDate: Date, endDate: Date): GrowthStat[] {
+    const stats: GrowthStat[] = [];
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      const periodStart = new Date(current);
+      let periodEnd: Date;
+
+      switch (period) {
+        case 'daily':
+          periodEnd = new Date(current.setDate(current.getDate() + 1));
+          break;
+        case 'weekly':
+          periodEnd = new Date(current.setDate(current.getDate() + 7));
+          break;
+        case 'monthly':
+          periodEnd = new Date(current.setMonth(current.getMonth() + 1));
+          break;
+      }
+
+      const count = tenants.filter(tenant => 
+        tenant.createdAt >= periodStart && tenant.createdAt < periodEnd
+      ).length;
+
+      stats.push({
+        period: periodStart.toISOString().split('T')[0],
+        count
+      });
+    }
+
+    return stats;
+  }
+
+  async getRevenueStats(period: 'daily' | 'weekly' | 'monthly' = 'monthly'): Promise<RevenueStat[]> {
+    const now = new Date();
+    const startDate = new Date();
+
+    switch (period) {
+      case 'daily':
+        startDate.setDate(startDate.getDate() - 30);
+        break;
+      case 'weekly':
+        startDate.setDate(startDate.getDate() - 12 * 7);
+        break;
+      case 'monthly':
+        startDate.setMonth(startDate.getMonth() - 12);
+        break;
+    }
+
+    const subscriptions = await this.subscriptionRepository.find({
+      where: {
+        createdAt: MoreThanOrEqual(startDate),
+        status: 'active'
+      },
+      relations: ['plan']
+    });
+
+    return this.aggregateRevenueStats(subscriptions, period, startDate, now);
+  }
+
+  private aggregateRevenueStats(subscriptions: Subscription[], period: string, startDate: Date, endDate: Date): RevenueStat[] {
+    const stats: RevenueStat[] = [];
+    const current = new Date(startDate);
+
+    while (current <= endDate) {
+      const periodStart = new Date(current);
+      let periodEnd: Date;
+
+      switch (period) {
+        case 'daily':
+          periodEnd = new Date(current.setDate(current.getDate() + 1));
+          break;
+        case 'weekly':
+          periodEnd = new Date(current.setDate(current.getDate() + 7));
+          break;
+        case 'monthly':
+          periodEnd = new Date(current.setMonth(current.getMonth() + 1));
+          break;
+      }
+
+      const periodSubscriptions = subscriptions.filter(sub => 
+        sub.createdAt >= periodStart && sub.createdAt < periodEnd
+      );
+
+      const revenue = periodSubscriptions.reduce((total, sub) => 
+        total + (sub.plan?.price || 0), 0
+      );
+
+      stats.push({
+        period: periodStart.toISOString().split('T')[0],
+        revenue
+      });
+    }
+
+    return stats;
+  }
+}
