@@ -20,6 +20,8 @@ import { WebSocketAuthModule } from './websocket/auth/websocket-auth.module';
 import { DatabaseSeederModule } from './database/seeders/database-seeder.module';
 import databaseConfig from './config/database.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ActivityLoggerInterceptor } from './common/interceptors/activity-logger.interceptor';
 
 @Module({
   imports: [
@@ -68,7 +70,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
     DatabaseSeederModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ActivityLoggerInterceptor,
+    },
+  ],
 })
 export class AppModule {
   static setupSwagger(app: any) {
