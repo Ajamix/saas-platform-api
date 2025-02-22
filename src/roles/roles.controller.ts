@@ -6,10 +6,13 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { Role } from './entities/role.entity';
+import { DynamicPermissionsGuard } from '../permissions/guards/dynamic-permissions.guard';
+import { ControllerPermissions } from '../permissions/decorators/controller-permissions.decorator';
 
 @ApiTags('Roles')
 @Controller('roles')
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, DynamicPermissionsGuard)
+@ControllerPermissions('roles')
 @ApiBearerAuth()
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}

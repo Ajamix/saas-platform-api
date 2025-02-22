@@ -20,10 +20,13 @@ import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
+import { DynamicPermissionsGuard } from '../permissions/guards/dynamic-permissions.guard';
+import { ControllerPermissions } from '../permissions/decorators/controller-permissions.decorator';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, DynamicPermissionsGuard)
+@ControllerPermissions('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

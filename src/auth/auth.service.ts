@@ -102,13 +102,23 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
+    const permissions = user.roles
+    .flatMap(role => role.permissions)
+    .reduce((acc, permission) => {
+      if (!acc[permission.resource]) {
+        acc[permission.resource] = [];
+      }
+      if (!acc[permission.resource].includes(permission.action)) {
+        acc[permission.resource].push(permission.action);
+      }
+      return acc;
+    }, {} as Record<string, string[]>);
     const payload = { 
       email: user.email, 
       sub: user.id,
       tenantId: tenant.id,
-      isSuperAdmin: false,
-      hasSetupProfile: user.hasSetupProfile // Include the hasSetupProfile flag
+      hasSetupProfile: user.hasSetupProfile,
+      permissions
     };
 
     return {
@@ -167,7 +177,6 @@ export class AuthService {
         email: user.email, 
         sub: user.id,
         tenantId: tenant.id,
-        isSuperAdmin: false,
         hasSetupProfile: false
       };
 

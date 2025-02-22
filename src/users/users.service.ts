@@ -128,7 +128,7 @@ export class UsersService {
     if (email) {
       const user = await this.userRepository.findOne({
         where: { email, tenantId },
-        relations: ['tenant', 'roles'],
+        relations: ['tenant', 'roles','roles.permissions'],
       });
 
       if (!user) {

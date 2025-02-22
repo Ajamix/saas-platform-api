@@ -5,10 +5,14 @@ import { TenantGuard } from '../../tenants/guards/tenant.guard';
 import { PeriodQueryDto } from '../shared/period.dto';
 import { TenantDashboardStats, UserActivityStat, RoleDistribution } from '../shared/dashboard.types';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ControllerPermissions } from 'src/permissions/decorators/controller-permissions.decorator';
+import { DynamicPermissionsGuard } from 'src/permissions/guards/dynamic-permissions.guard';
+
 
 @ApiTags('Tenant Dashboard')
 @Controller('tenant-dashboard')
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard,DynamicPermissionsGuard)
+@ControllerPermissions('dashboard')
 @ApiBearerAuth()
 export class TenantDashboardController {
   constructor(private readonly tenantDashboardService: TenantDashboardService) {}

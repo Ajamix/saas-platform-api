@@ -8,10 +8,11 @@ import { SuperAdminModule } from '../super-admin/super-admin.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { UsersModule } from '../users/users.module';
 import { TenantsModule } from '../tenants/tenants.module';
+import { User } from 'src/users/entities/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Subscription, SubscriptionPlan]),
+    TypeOrmModule.forFeature([Subscription, SubscriptionPlan, User]),
     SuperAdminModule,
     NotificationsModule,
     UsersModule,

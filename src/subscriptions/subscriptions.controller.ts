@@ -18,10 +18,13 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
+import { DynamicPermissionsGuard } from '../permissions/guards/dynamic-permissions.guard';
+import { ControllerPermissions } from '../permissions/decorators/controller-permissions.decorator';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
 @UseGuards(JwtAuthGuard)
+@ControllerPermissions('subscriptions')
 @ApiBearerAuth()
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
@@ -59,7 +62,7 @@ export class SubscriptionsController {
 
   // TENANT ADMIN ONLY
   @Get('tenant')
-  @UseGuards(TenantGuard)
+  @UseGuards(TenantGuard, DynamicPermissionsGuard)
   @ApiOperation({ summary: 'Get tenant subscriptions (Tenant Admin only)' })
   async findByTenant(@Request() req) {
     const subscriptions = await this.subscriptionsService.findByTenant(req.user.tenantId);
@@ -68,7 +71,7 @@ export class SubscriptionsController {
 
   // TENANT USERS
   @Get('active')
-  @UseGuards(TenantGuard)
+  @UseGuards(TenantGuard, DynamicPermissionsGuard)
   @ApiOperation({ summary: 'Get active subscription for tenant' })
   @ApiResponse({
     status: 200,
@@ -96,7 +99,8 @@ export class SubscriptionsController {
 
   // TENANT ADMIN OR SUPER ADMIN
   @Get(':id')
-  @UseGuards(TenantGuard)
+  @UseGuards(TenantGuard, DynamicPermissionsGuard)
+
   @ApiOperation({ summary: 'Get subscription by ID' })
   async findOne(@Param('id') id: string, @Request() req) {
     const subscription = await this.subscriptionsService.findOne(id);
@@ -123,7 +127,8 @@ export class SubscriptionsController {
 
   // TENANT ADMIN ONLY
   @Post(':id/cancel')
-  @UseGuards(TenantGuard)
+  @UseGuards(TenantGuard, DynamicPermissionsGuard)
+
   @ApiOperation({ summary: 'Cancel subscription (Tenant Admin only)' })
   async cancel(@Param('id') id: string, @Request() req) {
     const subscription = await this.subscriptionsService.findOne(id);

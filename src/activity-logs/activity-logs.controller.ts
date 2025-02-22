@@ -11,6 +11,8 @@ import { User } from '../users/entities/user.entity';
 import { ActivityLog } from './entities/activity-log.entity';
 import { CreateActivityLogSchema, ActivityLogResponseSchema } from '../swagger/schemas/activity-log.schema';
 import { QueryActivityLogDto } from './dto/query-activity-log.dto';
+import { DynamicPermissionsGuard } from '../permissions/guards/dynamic-permissions.guard';
+import { ControllerPermissions } from '../permissions/decorators/controller-permissions.decorator';
 
 interface RequestWithUser extends ExpressRequest {
   user: User;
@@ -19,12 +21,14 @@ interface RequestWithUser extends ExpressRequest {
 @ApiTags('Activity Logs')
 @Controller('activity-logs')
 @UseGuards(JwtAuthGuard)
+@ControllerPermissions('activity-logs')
 @ApiBearerAuth()
 export class ActivityLogsController {
   constructor(private readonly activityLogsService: ActivityLogsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create activity log' })
+  @UseGuards(SuperAdminGuard)
   @ApiBody({ schema: CreateActivityLogSchema })
   @ApiResponse({ 
     status: 201, 
@@ -36,7 +40,7 @@ export class ActivityLogsController {
   }
 
   @Get()
-  @UseGuards(TenantGuard)
+  @UseGuards(TenantGuard, DynamicPermissionsGuard)
   @ApiOperation({ summary: 'Get tenant activity logs (paginated)' })
   @ApiResponse({
     status: 200,
