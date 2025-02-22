@@ -16,7 +16,6 @@ import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { GlobalSettingsModule } from './settings/global-settings/global-settings.module';
 import { TenantSettingsModule } from './settings/tenant-settings/tenant-settings.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { WebSocketAuthModule } from './websocket/auth/websocket-auth.module';
 import { DatabaseSeederModule } from './database/seeders/database-seeder.module';
 import databaseConfig from './config/database.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -42,7 +41,7 @@ import { RolesModule } from './roles/roles.module';
         database: configService.get('database.database'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        logging: configService.get('database.logging'),
+        // logging: configService.get('database.logging'),
       }),
       inject: [ConfigService],
     }),
@@ -68,12 +67,11 @@ import { RolesModule } from './roles/roles.module';
     GlobalSettingsModule,
     TenantSettingsModule,
     NotificationsModule,
-    WebSocketAuthModule,
     DatabaseSeederModule,
     PermissionsModule,
     RolesModule,
   ],
-  controllers: [AppController],
+  // controllers: [AppController],
   providers: [
     AppService,
     {

@@ -7,9 +7,9 @@ import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { User } from '../users/entities/user.entity';
 import { Notification } from './entities/notification.entity';
 import { ActivityType } from '../activity-logs/entities/activity-log.entity';
-import { NotificationsGateway } from './notifications.gateway';
 import { PushNotificationsService } from './push/push-notifications.service';
 import { EmailTemplatesService } from '../email/templates/email-templates.service';
+import { NotificationsSse } from './notifications.sse';
 
 export type NotificationType = 
   | 'user_registration'
@@ -41,7 +41,7 @@ export class NotificationsService {
     private readonly emailService: EmailService,
     private readonly emailTemplatesService: EmailTemplatesService,
     private readonly activityLogsService: ActivityLogsService,
-    private readonly notificationsGateway: NotificationsGateway,
+    private readonly notificationsSse: NotificationsSse,
     private readonly pushNotificationsService: PushNotificationsService,
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
@@ -68,7 +68,7 @@ export class NotificationsService {
       if (settings.notifications.enableInAppNotifications) {
         const notification = await this.createInAppNotification(options);
         // Send real-time notification via WebSocket
-        this.notificationsGateway.sendNotificationToUser(user.id, notification);
+        this.notificationsSse.sendNotificationToUser(user.id, notification);
         promises.push(Promise.resolve(notification));
       }
 
@@ -230,7 +230,7 @@ export class NotificationsService {
       await this.notificationRepository.save(notification);
       
       // Notify other connected devices via WebSocket
-      this.notificationsGateway.sendNotificationToUser(userId, {
+      this.notificationsSse.sendNotificationToUser(userId, {
         type: 'notification_read',
         notificationId,
       });
@@ -257,7 +257,7 @@ export class NotificationsService {
     });
 
     // Notify other connected devices via WebSocket
-    this.notificationsGateway.sendNotificationToUser(userId, {
+    this.notificationsSse.sendNotificationToUser(userId, {
       type: 'notification_deleted',
       notificationId,
     });
@@ -270,7 +270,7 @@ export class NotificationsService {
     });
 
     // Notify other connected devices via WebSocket
-    this.notificationsGateway.sendNotificationToUser(userId, {
+    this.notificationsSse.sendNotificationToUser(userId, {
       type: 'notifications_cleared',
     });
   }

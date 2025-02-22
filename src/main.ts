@@ -7,27 +7,36 @@ import { PermissionSeeder } from './database/seeders/permission.seeder';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Keep this - it's our single source of API prefix
-  app.setGlobalPrefix('api');
-  
-  // Enable CORS
+  // Configure CORS
   app.enableCors({
-    origin: '*', // Or your frontend URL
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: [
+      'Content-Type', 
+      'Authorization', 
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Cache-Control',
+      'Last-Event-ID'
+    ],
+    exposedHeaders: [
+      'Content-Type',
+      'Cache-Control',
+      'Connection',
+      'Last-Event-ID'
+    ],
   });
-  
-  // Enable validation pipes with transform enabled
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
 
-  // Run database seeders
+  app.setGlobalPrefix('api');
+  app.useGlobalPipes(new ValidationPipe());
+
+  // Run seeders
   const globalSettingsSeeder = app.get(GlobalSettingsSeeder);
-  const permissionSeeder = app.get(PermissionSeeder);
-  
   await globalSettingsSeeder.seed();
+
+  const permissionSeeder = app.get(PermissionSeeder);
   await permissionSeeder.seed();
 
   // Setup Swagger with proper configuration
