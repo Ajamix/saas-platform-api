@@ -11,11 +11,12 @@ import { WebSocketAuthGuard } from '../websocket/auth/websocket-auth.guard';
 import { WsAuthUser } from '../auth/decorators/ws-auth-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { WebSocketAuthService } from '../websocket/auth/websocket-auth.service';
+import { WsException } from '@nestjs/websockets';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
+    origin: '*',
+    credentials: true
   },
   namespace: 'notifications',
 })
@@ -45,10 +46,13 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     this.wsAuthService.storeUser(user.id, user);
 
     // Join user-specific room and tenant room if applicable
-    client.join(`user:${user.id}`);
-    if (user.tenantId) {
-      client.join(`tenant:${user.tenantId}`);
-    }
+    const userRoom = `user:${user.id}`;
+    await client.join(userRoom);
+    
+    // Send acknowledgment of automatic room join
+    client.emit('joined', userRoom);
+    
+    console.log(`User ${user.id} connected and joined room ${userRoom}`);
   }
 
   handleDisconnect(client: Socket) {
@@ -62,6 +66,41 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
           this.wsAuthService.removeUser(user.id);
         }
       }
+      console.log(`User ${user.id} disconnected`);
+    }
+  }
+
+  // ✅ Handle client explicitly joining a room
+  @SubscribeMessage('join')
+  @UseGuards(WebSocketAuthGuard)
+  async handleJoinRoom(client: Socket, room: string) {
+    try {
+      const user = client.handshake.auth.user as User;
+      if (!user) {
+        throw new WsException('User not authenticated');
+      }
+
+      // Validate room format
+      if (!room.startsWith('user:') && !room.startsWith('tenant:')) {
+        throw new WsException('Invalid room format');
+      }
+
+      // Join the room
+      await client.join(room);
+      
+      // Send acknowledgment
+      client.emit('joined', room);
+      
+      console.log(`User ${user.id} joined room: ${room}`);
+      
+      // Log current room users
+      const roomUsers = this.server.sockets.adapter.rooms.get(room);
+      console.log(`Users in room ${room}:`, roomUsers ? [...roomUsers] : "No users found");
+
+      return { success: true, room };
+    } catch (error) {
+      console.error('Error joining room:', error);
+      throw new WsException(error.message || 'Failed to join room');
     }
   }
 
@@ -76,6 +115,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   sendNotificationToUser(userId: string, notification: any) {
+    console.log(`Sending notification to user: ${userId}`);
     this.server.to(`user:${userId}`).emit('notification', notification);
   }
 
@@ -86,4 +126,4 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   sendBroadcast(notification: any) {
     this.server.emit('notification', notification);
   }
-} 
+}

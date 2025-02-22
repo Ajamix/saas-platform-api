@@ -120,6 +120,16 @@ export class PermissionSeeder {
         description: 'Can manage notification settings',
         resource: 'notifications',
         action: 'manage',
+      },     {
+        name: 'clearnotifications',
+        description: 'Can clear notifications',
+        resource: 'notifications',
+        action: 'update',
+      },     {
+        name: 'delete_notifications',
+        description: 'Can delete notifications',
+        resource: 'notifications',
+        action: 'delete',
       },
     ];
 

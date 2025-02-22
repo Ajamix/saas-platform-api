@@ -14,14 +14,18 @@ export class PushNotificationsService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const settings = await this.settingsProvider.getEffectiveSettings();
+    // Temporarily skip web-push initialization
+    return;
+    
+    // We'll enable this later when we have VAPID keys
+    /*const settings = await this.settingsProvider.getEffectiveSettings();
     if (settings.notifications.enablePushNotifications) {
       webPush.setVapidDetails(
         `mailto:${settings.notifications.pushNotificationEmail}`,
         settings.notifications.vapidPublicKey,
         settings.notifications.vapidPrivateKey,
       );
-    }
+    }*/
   }
 
   async saveSubscription(subscription: PushSubscriptionJSON, userId: string, tenantId?: string) {

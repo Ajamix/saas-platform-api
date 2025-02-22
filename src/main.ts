@@ -11,7 +11,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    origin: '*', // Or your frontend URL
+    credentials: true,
+  });
   
   // Enable validation pipes with transform enabled
   app.useGlobalPipes(new ValidationPipe({
@@ -30,7 +33,7 @@ async function bootstrap() {
   // Setup Swagger with proper configuration
   AppModule.setupSwagger(app);
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 4000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
   console.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);

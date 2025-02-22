@@ -12,10 +12,12 @@ import { EmailTemplatesService } from '../email/templates/email-templates.servic
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
 import { WebSocketAuthModule } from '../websocket/auth/websocket-auth.module';
+import { NotificationsController } from './notifications.controller';
+import { User } from 'src/users/entities/user.entity';
 console.log('NotificationsModule Loaded');
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, PushSubscription]),
+    TypeOrmModule.forFeature([Notification, PushSubscription, User]),
     ConfigModule,
     WebSocketAuthModule,
     SettingsModule,
@@ -23,6 +25,7 @@ console.log('NotificationsModule Loaded');
     ActivityLogsModule,
     forwardRef(() => UsersModule),
   ],
+  controllers: [NotificationsController],
   providers: [
     NotificationsService,
     NotificationsGateway,
