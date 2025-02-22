@@ -1,26 +1,51 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, QueryRunner, In } from 'typeorm';
 import { User } from './entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TenantsService } from '../tenants/tenants.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
     private readonly notificationsService: NotificationsService,
     private readonly tenantsService: TenantsService,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const user = this.userRepository.create(createUserDto);
-    const savedUser = await this.userRepository.save(user);
+  async create(createUserDto: CreateUserDto, queryRunner?: QueryRunner): Promise<User> {
+    const repo = queryRunner ? queryRunner.manager.getRepository(User) : this.userRepository;
+    const roleRepo = queryRunner ? queryRunner.manager.getRepository(Role) : this.roleRepository;
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    
+    // Find roles if roleIds provided
+    let roles: Role[] = [];
+    if (createUserDto.roleIds?.length) {
+      roles = await roleRepo.findBy({
+        id: In(createUserDto.roleIds),
+        tenantId: createUserDto.tenantId
+      });
+    }
 
-    if (createUserDto.tenantId) {
+    const user = repo.create({
+      ...createUserDto,
+      password: hashedPassword,
+      roles
+    });
+    
+    const savedUser = await repo.save(user);
+
+    // Skip notifications during transaction (they'll be sent after commit)
+    if (!queryRunner && createUserDto.tenantId) {
       const tenant = await this.tenantsService.findOne(createUserDto.tenantId);
       // Notify tenant admins about new team member
       const adminUsers = await this.findByEmailAndTenant(null, tenant.id);
@@ -45,10 +70,45 @@ export class UsersService {
     return savedUser;
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({
-      relations: ['tenant', 'roles'],
-    });
+  async findAll(tenantId: string, options: { 
+    page?: number, 
+    limit?: number, 
+    search?: string 
+  } = {}): Promise<{ 
+    data: User[],
+    total: number,
+    page: number,
+    limit: number,
+    totalPages: number
+  }> {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search 
+    } = options;
+
+    const skip = (page - 1) * limit;
+    const query = this.userRepository.createQueryBuilder('user')
+      .where('user.tenantId = :tenantId', { tenantId })
+      .leftJoinAndSelect('user.roles', 'roles')
+      .skip(skip)
+      .take(limit);
+
+    if (search) {
+      query.andWhere('(user.firstName ILIKE :search OR user.lastName ILIKE :search OR user.email ILIKE :search)', 
+        { search: `%${search}%` }
+      );
+    }
+
+    const [users, total] = await query.getManyAndCount();
+
+    return {
+      data: users,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    };
   }
 
   async findOne(id: string): Promise<User> {
@@ -87,7 +147,14 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
-    const oldRoles = [...user.roles];
+
+    // Update roles if provided
+    if (updateUserDto.roleIds?.length) {
+      user.roles = await this.roleRepository.findBy({
+        id: In(updateUserDto.roleIds),
+        tenantId: user.tenantId
+      });
+    }
 
     Object.assign(user, updateUserDto);
     const updatedUser = await this.userRepository.save(user);
@@ -102,8 +169,8 @@ export class UsersService {
         data: {
           companyName: tenant.name,
           action: 'role_changed',
-          oldRoles: oldRoles.map(r => r.name),
-          newRoles: user.roles.map(r => r.name),
+          oldRoles: user.roles.map(r => r.name),
+          newRoles: updatedUser.roles.map(r => r.name),
           effectiveDate: new Date(),
         },
         tenantId: tenant.id,
@@ -123,8 +190,8 @@ export class UsersService {
               action: 'role_changed',
               memberName: `${updatedUser.firstName} ${updatedUser.lastName}`,
               memberEmail: updatedUser.email,
-              oldRoles: oldRoles.map(r => r.name),
-              newRoles: user.roles.map(r => r.name),
+              oldRoles: user.roles.map(r => r.name),
+              newRoles: updatedUser.roles.map(r => r.name),
               teamUrl: '/team',
             },
             tenantId: tenant.id,

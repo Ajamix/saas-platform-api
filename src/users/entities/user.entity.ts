@@ -1,7 +1,8 @@
-import { Entity, Column, ManyToOne, ManyToMany, JoinTable, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, ManyToMany, JoinTable, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { Tenant } from '../../tenants/entities/tenant.entity';
 import { Role } from '../../roles/entities/role.entity';
+import { Profile } from '../../profiles/entities/profile.entity';
 import { Exclude } from 'class-transformer';
 
 @Entity('users')
@@ -39,4 +40,10 @@ export class User extends BaseEntity {
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
   roles: Role[];
+
+  @Column({ default: false })
+  hasSetupProfile: boolean;
+
+  @OneToOne(() => Profile, profile => profile.user)
+  profile: Profile;
 }

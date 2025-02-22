@@ -24,13 +24,7 @@ export class TenantSettingsService {
 
     const savedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Created tenant settings',
-      'CREATE',
-      { settingsId: savedSettings.id },
-      request,
-    );
+
 
     return savedSettings;
   }
@@ -54,13 +48,6 @@ export class TenantSettingsService {
     Object.assign(settings, updateTenantSettingDto);
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant settings',
-      'UPDATE',
-      { settingsId: settings.id, changes: updateTenantSettingDto },
-      request,
-    );
 
     return updatedSettings;
   }
@@ -75,13 +62,7 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant SMTP settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+
 
     return updatedSettings;
   }
@@ -101,13 +82,7 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant notification settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+ 
 
     return updatedSettings;
   }
@@ -127,13 +102,7 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant branding settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+  
 
     return updatedSettings;
   }
@@ -153,13 +122,6 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant security settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
 
     return updatedSettings;
   }
@@ -179,13 +141,7 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated tenant feature settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+
 
     return updatedSettings;
   }
@@ -194,12 +150,6 @@ export class TenantSettingsService {
     const settings = await this.findByTenant(tenantId);
     await this.tenantSettingRepository.remove(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Deleted tenant settings',
-      'DELETE',
-      { settingsId: settings.id },
-      request,
-    );
+
   }
 }

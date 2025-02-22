@@ -7,38 +7,56 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { User } from '../users/entities/user.entity';
 import { Request } from 'express';
+import { ActivityType } from '../activity-logs/entities/activity-log.entity';
 
 @Injectable()
 export class ProfilesService {
   constructor(
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly activityLogsService: ActivityLogsService,
   ) {}
 
-  async create(createProfileDto: CreateProfileDto, user: User, request?: Request) {
+  async create(createProfileDto: CreateProfileDto, user: User, request?: Request): Promise<Profile> {
+    // Check if profile already exists
+    const existingProfile = await this.profileRepository.findOne({
+      where: { userId: user.id }
+    });
+
+    if (existingProfile) {
+      throw new Error('Profile already exists for this user');
+    }
+
+    // Create new profile
     const profile = this.profileRepository.create({
       ...createProfileDto,
       userId: user.id,
+      user: user
     });
 
     const savedProfile = await this.profileRepository.save(profile);
 
+    // Update user's hasSetupProfile flag
+    await this.userRepository.update(user.id, { hasSetupProfile: true });
+
+    // Log the activity
     await this.activityLogsService.logUserActivity(
       user,
       'Created profile',
-      'CREATE',
+      ActivityType.CREATE,
       { profileId: savedProfile.id },
-      request,
+      request
     );
 
     return savedProfile;
   }
 
-  async findOne(userId: string) {
+  async findOne(userId: string): Promise<Profile> {
     const profile = await this.profileRepository.findOne({
       where: { userId },
-      relations: ['user'],
+      relations: ['user']
     });
 
     if (!profile) {
@@ -54,13 +72,7 @@ export class ProfilesService {
     Object.assign(profile, updateProfileDto);
     const updatedProfile = await this.profileRepository.save(profile);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated profile',
-      'UPDATE',
-      { profileId: profile.id, changes: updateProfileDto },
-      request,
-    );
+
 
     return updatedProfile;
   }
@@ -75,13 +87,7 @@ export class ProfilesService {
 
     const updatedProfile = await this.profileRepository.save(profile);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated preferences',
-      'SETTINGS_CHANGE',
-      { profileId: profile.id, changes: preferences },
-      request,
-    );
+
 
     return updatedProfile;
   }
@@ -96,13 +102,7 @@ export class ProfilesService {
 
     const updatedProfile = await this.profileRepository.save(profile);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated social links',
-      'UPDATE',
-      { profileId: profile.id, changes: socialLinks },
-      request,
-    );
+
 
     return updatedProfile;
   }

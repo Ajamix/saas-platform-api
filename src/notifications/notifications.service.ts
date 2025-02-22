@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SettingsProvider } from '../settings/settings.provider';
@@ -34,6 +34,8 @@ interface NotificationOptions {
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(
     private readonly settingsProvider: SettingsProvider,
     private readonly emailService: EmailService,
@@ -46,63 +48,73 @@ export class NotificationsService {
   ) {}
 
   async sendNotification(options: NotificationOptions) {
-    const { type, user, data, tenantId } = options;
-    const settings = await this.settingsProvider.getEffectiveSettings(tenantId);
+    try {
+      const { type, user, data, tenantId } = options;
+      const settings = await this.settingsProvider.getEffectiveSettings(tenantId);
 
-    // Check if notification type is enabled
-    if (!this.isNotificationTypeEnabled(type, settings.notifications)) {
-      return;
-    }
+      // Check if notification type is enabled
+      if (!this.isNotificationTypeEnabled(type, settings.notifications)) {
+        return;
+      }
 
-    const promises: Promise<any>[] = [];
+      const promises: Promise<any>[] = [];
 
-    // Send email notification if enabled
-    if (settings.notifications.enableEmailNotifications) {
-      promises.push(this.sendEmailNotification(options));
-    }
+      // Send email notification if enabled
+      if (settings.notifications.enableEmailNotifications) {
+        promises.push(this.sendEmailNotification(options));
+      }
 
-    // Create and send in-app notification if enabled
-    if (settings.notifications.enableInAppNotifications) {
-      const notification = await this.createInAppNotification(options);
-      // Send real-time notification via WebSocket
-      this.notificationsGateway.sendNotificationToUser(user.id, notification);
-      promises.push(Promise.resolve(notification));
-    }
+      // Create and send in-app notification if enabled
+      if (settings.notifications.enableInAppNotifications) {
+        const notification = await this.createInAppNotification(options);
+        // Send real-time notification via WebSocket
+        this.notificationsGateway.sendNotificationToUser(user.id, notification);
+        promises.push(Promise.resolve(notification));
+      }
 
-    // Send push notification if enabled
-    if (settings.notifications.enablePushNotifications) {
+      // Send push notification if enabled
+      if (settings.notifications.enablePushNotifications) {
+        promises.push(
+          this.pushNotificationsService.sendPushNotification(user.id, {
+            title: options.title || this.getDefaultTitle(type),
+            body: options.message || this.getDefaultMessage(type, data),
+            data: {
+              type,
+              ...data,
+            },
+          })
+        );
+      }
+
+      // Log the notification
       promises.push(
-        this.pushNotificationsService.sendPushNotification(user.id, {
-          title: options.title || this.getDefaultTitle(type),
-          body: options.message || this.getDefaultMessage(type, data),
-          data: {
-            type,
-            ...data,
+        this.activityLogsService.create({
+          type: ActivityType.NOTIFICATION_SENT,
+          action: `Sent ${type} notification`,
+          userId: user.id,
+          tenantId: tenantId,
+          details: {
+            notificationType: type,
+            channels: [
+              settings.notifications.enableEmailNotifications && 'email',
+              settings.notifications.enableInAppNotifications && 'in-app',
+              settings.notifications.enablePushNotifications && 'push',
+            ].filter(Boolean),
+            data,
           },
         })
       );
+
+      await Promise.all(promises);
+
+      return { success: true };
+    } catch (error) {
+      this.logger.error(
+        `Failed to create notification: ${error.message}`,
+        error.stack
+      );
+      console.log(`Failed to create notification: ${error.message}`);
     }
-
-    // Log the notification
-    promises.push(
-      this.activityLogsService.create({
-        type: ActivityType.NOTIFICATION_SENT,
-        action: `Sent ${type} notification`,
-        userId: user.id,
-        tenantId: tenantId,
-        details: {
-          notificationType: type,
-          channels: [
-            settings.notifications.enableEmailNotifications && 'email',
-            settings.notifications.enableInAppNotifications && 'in-app',
-            settings.notifications.enablePushNotifications && 'push',
-          ].filter(Boolean),
-          data,
-        },
-      })
-    );
-
-    await Promise.all(promises);
   }
 
   private async sendEmailNotification(options: NotificationOptions) {
@@ -115,12 +127,20 @@ export class NotificationsService {
       }
     );
 
-    return this.emailService.sendEmail({
-      to: user.email,
-      subject: this.getDefaultTitle(type),
-      html: templateHtml,
-      tenantId,
-    });
+    try {
+      return this.emailService.sendEmail({
+        to: user.email,
+        subject: this.getDefaultTitle(type),
+        html: templateHtml,
+        tenantId,
+      });
+    } catch (emailError) {
+      this.logger.warn(
+        `Failed to send email notification: ${emailError.message}`,
+        emailError.stack
+      );
+      // Continue execution - don't let email failures break the app
+    }
   }
 
   private async createInAppNotification(options: NotificationOptions) {

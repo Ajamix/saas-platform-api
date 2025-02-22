@@ -1,6 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-import { CreateUserDto } from '../../users/dto/create-user.dto';
-import { OmitType } from '@nestjs/mapped-types';
+import { IsNotEmpty, IsString, IsEmail, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterTenantDto {
@@ -15,11 +14,33 @@ export class RegisterTenantDto {
   subdomain: string;
 }
 
-export class RegisterDto extends OmitType(CreateUserDto, ['tenantId', 'roleIds'] as const) {
+export class RegisterDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: 'password123' })
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @ApiProperty({ example: 'John' })
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @ApiProperty({ example: 'Doe' })
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
   @ApiProperty({
     description: 'Tenant information',
     type: RegisterTenantDto
   })
+  @ValidateNested()
+  @Type(() => RegisterTenantDto)
   @IsNotEmpty()
   tenant: RegisterTenantDto;
 } 

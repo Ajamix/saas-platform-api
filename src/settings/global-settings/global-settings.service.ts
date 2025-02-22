@@ -20,13 +20,6 @@ export class GlobalSettingsService {
     const settings = this.globalSettingRepository.create(createGlobalSettingDto);
     const savedSettings = await this.globalSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Created global settings',
-      'CREATE',
-      { settingsId: savedSettings.id },
-      request,
-    );
 
     return savedSettings;
   }
@@ -65,13 +58,7 @@ export class GlobalSettingsService {
     Object.assign(settings, updateGlobalSettingDto);
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated global settings',
-      'UPDATE',
-      { settingsId: settings.id, changes: updateGlobalSettingDto },
-      request,
-    );
+
 
     return updatedSettings;
   }
@@ -86,13 +73,7 @@ export class GlobalSettingsService {
 
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated SMTP settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+
 
     return updatedSettings;
   }
@@ -112,13 +93,7 @@ export class GlobalSettingsService {
 
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated notification settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+
 
     return updatedSettings;
   }
@@ -133,13 +108,7 @@ export class GlobalSettingsService {
 
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Updated payment settings',
-      'SETTINGS_CHANGE',
-      { settingsId: settings.id },
-      request,
-    );
+ 
 
     return updatedSettings;
   }
@@ -148,12 +117,6 @@ export class GlobalSettingsService {
     const settings = await this.findOne(id);
     await this.globalSettingRepository.remove(settings);
 
-    await this.activityLogsService.logUserActivity(
-      user,
-      'Deleted global settings',
-      'DELETE',
-      { settingsId: id },
-      request,
-    );
+
   }
 }

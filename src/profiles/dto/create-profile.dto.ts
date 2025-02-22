@@ -113,7 +113,7 @@ export class CreateProfileDto {
     example: '+1234567890',
     description: 'User phone number'
   })
-  @IsPhoneNumber()
+
   @IsOptional()
   phoneNumber?: string;
 

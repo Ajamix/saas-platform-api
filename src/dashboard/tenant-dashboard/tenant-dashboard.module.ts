@@ -6,6 +6,7 @@ import { User } from '../../users/entities/user.entity';
 import { Tenant } from '../../tenants/entities/tenant.entity';
 import { Subscription } from '../../subscriptions/entities/subscription.entity';
 import { Role } from '../../roles/entities/role.entity';
+import { TenantsModule } from '../../tenants/tenants.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Role } from '../../roles/entities/role.entity';
       Subscription,
       Role
     ]),
+    TenantsModule,
   ],
   controllers: [TenantDashboardController],
   providers: [TenantDashboardService]

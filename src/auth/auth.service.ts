@@ -66,7 +66,8 @@ export class AuthService {
       const payload = { 
         email: superAdmin.email, 
         sub: superAdmin.id,
-        isSuperAdmin: true 
+        isSuperAdmin: true,
+        hasSetupProfile: true // Super admins always have profile setup
       };
       
       return {
@@ -106,7 +107,8 @@ export class AuthService {
       email: user.email, 
       sub: user.id,
       tenantId: tenant.id,
-      isSuperAdmin: false 
+      isSuperAdmin: false,
+      hasSetupProfile: user.hasSetupProfile // Include the hasSetupProfile flag
     };
 
     return {
@@ -129,68 +131,59 @@ export class AuthService {
     await queryRunner.startTransaction();
 
     try {
-      // Check if tenant subdomain is available
-      const existingTenant = await queryRunner.manager.findOne(Tenant, {
-        where: { subdomain: registerDto.tenant.subdomain }
-      });
+      // Check if tenant exists (use regular repository for this check)
+      const existingTenant = await this.tenantsService.findBySubdomain(
+        registerDto.tenant.subdomain
+      ).catch(() => null);
 
       if (existingTenant) {
-        throw new ConflictException('Subdomain is already taken');
+        throw new ConflictException('Subdomain already taken');
       }
 
-      // Create tenant
-      const tenant = queryRunner.manager.create(Tenant, {
+      // Create tenant using queryRunner
+      const tenant = await this.tenantsService.create({
         name: registerDto.tenant.tenantName,
         subdomain: registerDto.tenant.subdomain,
         isActive: true,
-      });
-      await queryRunner.manager.save(tenant);
+      }, queryRunner);
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-      // Create user as tenant admin with explicit field mapping
-      const user = queryRunner.manager.create(User, {
+      // Create user using queryRunner
+      const user = await this.usersService.create({
         email: registerDto.email,
-        password: hashedPassword,
+        password: registerDto.password,
         firstName: registerDto.firstName,
         lastName: registerDto.lastName,
         isActive: true,
-        isSuperAdmin: false,
-        tenantId: tenant.id, // Explicitly set the tenantId
-        tenant: tenant, // Also set the tenant relation
-      });
-      
-      await queryRunner.manager.save(user);
+        tenantId: tenant.id,
+      }, queryRunner);
 
-      // Commit the transaction
+      // Create and assign admin role using queryRunner
+      const adminRole = await this.tenantsService.createTenantAdminRole(tenant, queryRunner);
+      await this.tenantsService.assignAdminRole(user, adminRole, queryRunner);
+
       await queryRunner.commitTransaction();
 
       const payload = { 
         email: user.email, 
         sub: user.id,
         tenantId: tenant.id,
-        isSuperAdmin: false 
+        isSuperAdmin: false,
+        hasSetupProfile: false
       };
 
       return {
         user,
         tenant,
-        accessToken: this.jwtService.sign(payload, {
-          secret: this.configService.get('JWT_SECRET'),
-          expiresIn: this.configService.get('JWT_EXPIRATION'),
-        }),
+        accessToken: this.jwtService.sign(payload),
         refreshToken: this.jwtService.sign(payload, {
           secret: this.configService.get('JWT_REFRESH_SECRET'),
           expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION'),
         }),
       };
     } catch (error) {
-      // Rollback the transaction on error
       await queryRunner.rollbackTransaction();
       throw error;
     } finally {
-      // Release the query runner
       await queryRunner.release();
     }
   }
@@ -205,7 +198,8 @@ export class AuthService {
         email: decoded.email, 
         sub: decoded.sub,
         tenantId: decoded.tenantId,
-        isSuperAdmin: decoded.isSuperAdmin 
+        isSuperAdmin: decoded.isSuperAdmin,
+        hasSetupProfile: decoded.hasSetupProfile // Preserve the hasSetupProfile status
       };
 
       return {

@@ -224,12 +224,14 @@ export class SubscriptionsService {
   }
 
   async getActiveSubscription(tenantId: string): Promise<Subscription | null> {
-    return this.subscriptionRepository.findOne({
+    const subscription = await this.subscriptionRepository.findOne({
       where: {
         tenantId,
         status: 'active',
       },
       relations: ['plan'],
     });
+
+    return subscription || null;  // Explicitly return null if no subscription found
   }
 }

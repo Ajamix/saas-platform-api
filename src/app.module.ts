@@ -22,6 +22,8 @@ import databaseConfig from './config/database.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ActivityLoggerInterceptor } from './common/interceptors/activity-logger.interceptor';
+import { PermissionsModule } from './permissions/permissions.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
@@ -39,7 +41,7 @@ import { ActivityLoggerInterceptor } from './common/interceptors/activity-logger
         password: configService.get('database.password'),
         database: configService.get('database.database'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('database.synchronize'),
+        synchronize: true,
         logging: configService.get('database.logging'),
       }),
       inject: [ConfigService],
@@ -68,6 +70,8 @@ import { ActivityLoggerInterceptor } from './common/interceptors/activity-logger
     NotificationsModule,
     WebSocketAuthModule,
     DatabaseSeederModule,
+    PermissionsModule,
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [

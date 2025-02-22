@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { GlobalSettingsSeeder } from './database/seeders/global-settings.seeder';
+import { PermissionSeeder } from './database/seeders/permission.seeder';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,7 +22,10 @@ async function bootstrap() {
 
   // Run database seeders
   const globalSettingsSeeder = app.get(GlobalSettingsSeeder);
+  const permissionSeeder = app.get(PermissionSeeder);
+  
   await globalSettingsSeeder.seed();
+  await permissionSeeder.seed();
 
   // Setup Swagger with proper configuration
   AppModule.setupSwagger(app);

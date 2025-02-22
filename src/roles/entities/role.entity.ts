@@ -12,6 +12,9 @@ export class Role extends BaseEntity {
   @Column({ nullable: true })
   description?: string;
 
+  @Column()
+  tenantId: string;
+
   @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
   tenant: Tenant;
 

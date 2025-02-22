@@ -4,17 +4,17 @@ import { User } from '../../users/entities/user.entity';
 import { Tenant } from '../../tenants/entities/tenant.entity';
 
 export enum ActivityType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LOGIN = 'login',
-  LOGOUT = 'logout',
-  SUBSCRIPTION_CHANGE = 'subscription_change',
-  ROLE_CHANGE = 'role_change',
-  PERMISSION_CHANGE = 'permission_change',
-  SETTINGS_CHANGE = 'settings_change',
-  NOTIFICATION_SENT = 'notification_sent',
-  OTHER = 'other'
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  SUBSCRIPTION_CHANGE = 'SUBSCRIPTION_CHANGE',
+  ROLE_CHANGE = 'ROLE_CHANGE',
+  PERMISSION_CHANGE = 'PERMISSION_CHANGE',
+  SETTINGS_CHANGE = 'SETTINGS_CHANGE',
+  NOTIFICATION_SENT = 'NOTIFICATION_SENT',
+  OTHER = 'OTHER'
 }
 
 @Entity('activity_logs')
@@ -22,7 +22,8 @@ export class ActivityLog extends BaseEntity {
   @Column({
     type: 'enum',
     enum: ActivityType,
-    default: ActivityType.OTHER
+    default: ActivityType.OTHER,
+    enumName: 'activity_logs_type_enum'
   })
   type: ActivityType;
 

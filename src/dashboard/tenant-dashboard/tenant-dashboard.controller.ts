@@ -1,15 +1,21 @@
 import { Controller, Get, Query, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common';
 import { TenantDashboardService } from './tenant-dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { TenantGuard } from '../../tenants/guards/tenant.guard';
 import { PeriodQueryDto } from '../shared/period.dto';
 import { TenantDashboardStats, UserActivityStat, RoleDistribution } from '../shared/dashboard.types';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Tenant Dashboard')
 @Controller('tenant-dashboard')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
+@ApiBearerAuth()
 export class TenantDashboardController {
   constructor(private readonly tenantDashboardService: TenantDashboardService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get tenant dashboard statistics' })
+  @ApiResponse({ status: 200, description: 'Returns dashboard statistics' })
   async getTenantDashboardStats(@Request() req): Promise<TenantDashboardStats> {
     try {
       if (!req.user?.tenantId) {

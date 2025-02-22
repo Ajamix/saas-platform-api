@@ -39,7 +39,7 @@ export class TenantsController {
   })
   @LogActivity()
   async create(@Body() createTenantDto: CreateTenantDto, @Request() req) {
-    return this.tenantsService.create(createTenantDto, req.user, req);
+    return this.tenantsService.create(createTenantDto, req.queryRunner);
   }
 
   @Get()

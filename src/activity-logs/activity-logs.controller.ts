@@ -1,17 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { ActivityLogsService } from './activity-logs.service';
 import { CreateActivityLogDto } from './dto/create-activity-log.dto';
 import { UpdateActivityLogDto } from './dto/update-activity-log.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
-import { Request } from 'express';
+import { Request as ExpressRequest } from 'express';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { User } from '../users/entities/user.entity';
 import { ActivityLog } from './entities/activity-log.entity';
 import { CreateActivityLogSchema, ActivityLogResponseSchema } from '../swagger/schemas/activity-log.schema';
+import { QueryActivityLogDto } from './dto/query-activity-log.dto';
 
-interface RequestWithUser extends Request {
+interface RequestWithUser extends ExpressRequest {
   user: User;
 }
 
@@ -35,43 +36,56 @@ export class ActivityLogsController {
   }
 
   @Get()
-  @UseGuards(SuperAdminGuard)
-  @ApiOperation({ summary: 'Get all activity logs (Super Admin only)' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns all activity logs',
-    type: [ActivityLog]
+  @UseGuards(TenantGuard)
+  @ApiOperation({ summary: 'Get tenant activity logs (paginated)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated activity logs for tenant',
+    schema: {
+      example: {
+        data: [
+          {
+            id: '123e4567-e89b-12d3-a456-426614174000',
+            type: 'USER_LOGIN',
+            action: 'User logged in',
+            userId: '123e4567-e89b-12d3-a456-426614174000',
+            createdAt: '2024-02-22T12:00:00Z'
+          }
+        ],
+        total: 100,
+        page: 1,
+        limit: 10,
+        totalPages: 10
+      }
+    }
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Requires Super Admin' })
-  findAll() {
-    return this.activityLogsService.findAll();
+  async findTenantLogs(@Query() query: QueryActivityLogDto, @Req() req: RequestWithUser) {
+    return this.activityLogsService.findAll({
+      ...query,
+      tenantId: req.user.tenantId
+    });
   }
 
-  @Get('tenant')
-  @UseGuards(TenantGuard)
-  @ApiOperation({ summary: 'Get tenant activity logs' })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns activity logs for the current tenant',
-    type: [ActivityLog]
+  @Get('all')
+  @UseGuards(SuperAdminGuard)
+  @ApiOperation({ summary: 'Get all activity logs (Super Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns paginated activity logs for all tenants'
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Requires Tenant Access' })
-  findTenantLogs(@Req() request: RequestWithUser) {
-    return this.activityLogsService.findByTenant(request.user.tenantId);
+  async findAllLogs(@Query() query: QueryActivityLogDto) {
+    return this.activityLogsService.findAll(query);
   }
 
   @Get('user')
   @ApiOperation({ summary: 'Get user activity logs' })
   @ApiResponse({ 
     status: 200, 
-    description: 'Returns activity logs for the current user',
-    type: [ActivityLog]
+    description: 'Returns activity logs for the current user'
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findUserLogs(@Req() request: RequestWithUser) {
-    return this.activityLogsService.findByUser(request.user.id);
+  findUserLogs(@Query() query: QueryActivityLogDto, @Req() request: RequestWithUser) {
+    return this.activityLogsService.findByUser(request.user.id, query);
   }
 
   // @Get(':id')

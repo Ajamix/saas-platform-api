@@ -12,15 +12,15 @@ export class CreateUserDto {
   @IsNotEmpty()
   password: string;
 
-  @ApiPropertyOptional({ example: 'John', description: 'User first name' })
+  @ApiProperty({ example: 'John', description: 'User first name' })
   @IsString()
-  @IsOptional()
-  firstName?: string;
+  @IsNotEmpty()
+  firstName: string;
 
-  @ApiPropertyOptional({ example: 'Doe', description: 'User last name' })
+  @ApiProperty({ example: 'Doe', description: 'User last name' })
   @IsString()
-  @IsOptional()
-  lastName?: string;
+  @IsNotEmpty()
+  lastName: string;
 
   @ApiPropertyOptional({ example: true, description: 'Whether the user is active' })
   @IsBoolean()
@@ -31,9 +31,9 @@ export class CreateUserDto {
     example: '123e4567-e89b-12d3-a456-426614174000', 
     description: 'ID of the tenant this user belongs to' 
   })
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
-  tenantId: string;
+  tenantId?: string;
 
   @ApiPropertyOptional({ 
     example: ['123e4567-e89b-12d3-a456-426614174000'],

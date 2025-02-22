@@ -9,115 +9,90 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { TenantGuard } from '../tenants/guards/tenant.guard';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { User } from './entities/user.entity';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create new user' })
-  @ApiBody({
-    schema: {
-      example: {
-        email: "newuser@company.com",
-        password: "securePass123!",
-        firstName: "New",
-        lastName: "User",
-        isActive: true,
-        tenantId: "123e4567-e89b-12d3-a456-426614174000",
-        roleIds: ["123e4567-e89b-12d3-a456-426614174000"]
-      }
-    }
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'User created successfully',
-    schema: {
-      example: {
-        id: "123e4567-e89b-12d3-a456-426614174000",
-        email: "newuser@company.com",
-        firstName: "New",
-        lastName: "User",
-        isActive: true,
-        tenantId: "123e4567-e89b-12d3-a456-426614174000",
-        roles: [
-          {
-            id: "123e4567-e89b-12d3-a456-426614174000",
-            name: "Editor",
-            description: "Can edit content"
-          }
-        ]
-      }
-    }
-  })
+  @ApiOperation({ summary: 'Create new user in tenant' })
+  @ApiResponse({ status: 201, type: User })
   async create(@Body() createUserDto: CreateUserDto, @Request() req) {
-    // Only super admin can create users for any tenant
-    // Regular users can only create users for their own tenant
-    if (!req.user.isSuperAdmin && req.user.tenantId !== createUserDto.tenantId) {
-      throw new ForbiddenException('You can only create users for your own tenant');
-    }
-
-    return this.usersService.create(createUserDto);
+    const { tenantId, ...userData } = createUserDto;
+    
+    return this.usersService.create({
+      ...userData,
+      tenantId: req.user.tenantId
+    });
   }
 
   @Get()
-  @UseGuards(SuperAdminGuard)
-  async findAll() {
-    return this.usersService.findAll();
-  }
-
-  @Get('tenant')
-  async findByTenant(@Request() req) {
-    // Users can only see users from their own tenant
-    return this.usersService.findByEmailAndTenant('', req.user.tenantId);
+  @ApiOperation({ summary: 'Get all users in tenant (paginated)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiResponse({ 
+    status: 200,
+    description: 'Returns paginated list of users',
+    schema: {
+      example: {
+        data: [User],
+        total: 100,
+        page: 1,
+        limit: 10,
+        totalPages: 10
+      }
+    }
+  })
+  findAll(
+    @Request() req,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    return this.usersService.findAll(req.user.tenantId, {
+      page,
+      limit,
+      search
+    });
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @Request() req) {
-    const user = await this.usersService.findOne(id);
-    
-    // Users can only see users from their own tenant
-    if (!req.user.isSuperAdmin && user.tenantId !== req.user.tenantId) {
-      throw new ForbiddenException('You can only view users from your own tenant');
-    }
-
-    return user;
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiResponse({ status: 200, type: User })
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    return this.usersService.findOne(id);
   }
 
   @Patch(':id')
-  async update(
-    @Param('id') id: string,
+  @ApiOperation({ summary: 'Update user' })
+  @ApiResponse({ status: 200, type: User })
+  update(
+    @Param('id', ParseUUIDPipe) id: string, 
     @Body() updateUserDto: UpdateUserDto,
-    @Request() req,
+    @Request() req
   ) {
-    const user = await this.usersService.findOne(id);
-
-    // Users can only update users from their own tenant
-    if (!req.user.isSuperAdmin && user.tenantId !== req.user.tenantId) {
-      throw new ForbiddenException('You can only update users from your own tenant');
-    }
-
     return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Request() req) {
-    const user = await this.usersService.findOne(id);
-
-    // Users can only delete users from their own tenant
-    if (!req.user.isSuperAdmin && user.tenantId !== req.user.tenantId) {
-      throw new ForbiddenException('You can only delete users from your own tenant');
-    }
-
-    return this.usersService.remove(id);
+  @ApiOperation({ summary: 'Delete user' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Request() req) {
+    await this.usersService.remove(id);
+    return { message: 'User deleted successfully' };
   }
 }

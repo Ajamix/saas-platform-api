@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere } from 'typeorm';
+import { Repository, Like, FindOptionsWhere, QueryRunner } from 'typeorm';
 import { Tenant } from './entities/tenant.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -8,21 +8,73 @@ import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { ActivityType } from '../activity-logs/entities/activity-log.entity';
 import { Request } from 'express';
 import { User } from '../users/entities/user.entity';
+import { Role } from '../roles/entities/role.entity';
+import { Permission } from '../permissions/entities/permission.entity';
 
 @Injectable()
 export class TenantsService {
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Permission)
+    private readonly permissionRepository: Repository<Permission>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createTenantDto: CreateTenantDto, user: User, request?: Request): Promise<Tenant> {
-    const tenant = this.tenantRepository.create(createTenantDto);
-    const savedTenant = await this.tenantRepository.save(tenant);
+  async createTenantAdminRole(tenant: Tenant, queryRunner?: QueryRunner): Promise<Role> {
+    const repo = queryRunner ? queryRunner.manager.getRepository(Role) : this.roleRepository;
+    const permRepo = queryRunner ? queryRunner.manager.getRepository(Permission) : this.permissionRepository;
 
+    // Get all available permissions
+    const allPermissions = await permRepo.find();
 
+    // Create admin role
+    const adminRole = repo.create({
+      name: 'Admin',
+      description: 'Tenant Administrator with full access',
+      tenant,
+    });
 
-    return savedTenant;
+    // Save the role first
+    const savedRole = await repo.save(adminRole);
+
+    // Then set the many-to-many relationships
+    savedRole.permissions = allPermissions;
+    
+    // Save again with permissions
+    return await repo.save(savedRole);
+  }
+
+  async assignAdminRole(user: User, role: Role, queryRunner?: QueryRunner): Promise<User> {
+    const repo = queryRunner ? queryRunner.manager.getRepository(User) : this.userRepository;
+
+    // Get existing user with roles
+    const existingUser = await repo.findOne({
+      where: { id: user.id },
+      relations: ['roles'],
+    });
+  
+    if (!existingUser) {
+      throw new Error(`User with ID ${user.id} not found`);
+    }
+  
+    existingUser.roles = existingUser.roles || [];
+    if (!existingUser.roles.some((r) => r.id === role.id)) {
+      existingUser.roles.push(role);
+    }
+  
+    return await repo.save(existingUser);
+  }
+  
+
+  async create(createTenantDto: CreateTenantDto, queryRunner?: QueryRunner): Promise<Tenant> {
+    const repo = queryRunner ? queryRunner.manager.getRepository(Tenant) : this.tenantRepository;
+    
+    const tenant = repo.create(createTenantDto);
+    return await repo.save(tenant);
   }
 
   async findAll(page: number = 1, limit: number = 10, search?: string): Promise<{ 
