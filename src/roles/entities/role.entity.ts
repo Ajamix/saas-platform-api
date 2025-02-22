@@ -3,6 +3,7 @@ import { BaseEntity } from '../../common/entities/base.entity';
 import { Tenant } from '../../tenants/entities/tenant.entity';
 import { User } from '../../users/entities/user.entity';
 import { Permission } from '../../permissions/entities/permission.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity('roles')
 export class Role extends BaseEntity {
@@ -28,4 +29,8 @@ export class Role extends BaseEntity {
     inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
   })
   permissions: Permission[];
+
+  @Column({ default: false })
+  @ApiProperty({ example: false, description: 'Whether this is a default role' })
+  isDefault: boolean;
 }

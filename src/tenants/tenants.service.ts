@@ -36,6 +36,7 @@ export class TenantsService {
       name: 'Admin',
       description: 'Tenant Administrator with full access',
       tenant,
+      isDefault: true,
     });
 
     // Save the role first

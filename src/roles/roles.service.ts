@@ -55,6 +55,11 @@ export class RolesService {
   async update(id: string, updateRoleDto: UpdateRoleDto, tenantId: string): Promise<Role> {
     const role = await this.findOne(id, tenantId);
 
+    // Prevent modifying default roles
+    if (role.isDefault) {
+      throw new ForbiddenException('Cannot modify default roles');
+    }
+
     // Update permissions if provided
     if (updateRoleDto.permissionIds) {
       role.permissions = await this.permissionRepository.findBy({
@@ -71,6 +76,12 @@ export class RolesService {
 
   async remove(id: string, tenantId: string): Promise<void> {
     const role = await this.findOne(id, tenantId);
+
+    // Prevent deleting default roles
+    if (role.isDefault) {
+      throw new ForbiddenException('Cannot delete default roles');
+    }
+
     await this.roleRepository.remove(role);
   }
 }
