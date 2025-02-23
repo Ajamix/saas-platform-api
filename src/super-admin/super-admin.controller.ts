@@ -5,15 +5,17 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from './guards/super-admin.guard';
 import { CreateSuperAdminDto } from './dto/create-super-admin.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { User } from '../users/entities/user.entity';
+import { AuthUser } from '../auth/decorators/auth-user.decorator';
 
 @ApiTags('Super Admin')
 @Controller('super-admin')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class SuperAdminController {
   constructor(private readonly superAdminService: SuperAdminService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create super admin user' })
   @ApiBody({
     schema: {
@@ -47,6 +49,7 @@ export class SuperAdminController {
   // Subscription Plan Management
   @Post('subscription-plans')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create subscription plan' })
   @ApiBody({
     schema: {
@@ -72,21 +75,46 @@ export class SuperAdminController {
   async createSubscriptionPlan(@Body() createSubscriptionPlanDto: CreateSubscriptionPlanDto) {
     return this.superAdminService.createSubscriptionPlan(createSubscriptionPlanDto);
   }
-
-  @Get('subscription-plans')
+  @Get('subscription-plans/admin')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
-  async getAllSubscriptionPlans() {
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all subscription plans (admin view)' })
+  async getAllSubscriptionPlansAdmin() {
     return this.superAdminService.getAllSubscriptionPlans();
   }
 
-  @Get('subscription-plans/:id')
+  @Get('subscription-plans/admin/:id')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
-  async getSubscriptionPlan(@Param('id') id: string) {
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get subscription plan by ID (admin view)' })
+  async getSubscriptionPlanAdmin(@Param('id') id: string) {
     return this.superAdminService.getSubscriptionPlan(id);
   }
 
+  @Get('subscription-plans')
+  @ApiOperation({ summary: 'Get all subscription plans' })
+  async getAllSubscriptionPlans() {
+    const plans = await this.superAdminService.getAllSubscriptionPlans();
+    return plans
+      .filter(plan => plan.isActive)
+      .map(({ createdAt, updatedAt, ...publicData }) => publicData);
+  }
+
+  @Get('subscription-plans/:id')
+  @ApiOperation({ summary: 'Get subscription plan by ID' })
+  async getSubscriptionPlan(@Param('id') id: string) {
+    const plan = await this.superAdminService.getSubscriptionPlan(id);
+    if (!plan.isActive) {
+      return null; // Will be transformed to 404 by NestJS
+    }
+    const { createdAt, updatedAt, ...publicData } = plan;
+    return publicData;
+  }
+
+
   @Patch('subscription-plans/:id')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   async updateSubscriptionPlan(
     @Param('id') id: string,
     @Body() updateData: Partial<CreateSubscriptionPlanDto>,
@@ -96,6 +124,7 @@ export class SuperAdminController {
 
   @Delete('subscription-plans/:id')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   async deleteSubscriptionPlan(@Param('id') id: string) {
     return this.superAdminService.deleteSubscriptionPlan(id);
   }

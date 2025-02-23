@@ -8,11 +8,12 @@ import { ControllerPermissions } from '../permissions/decorators/controller-perm
 
 @ApiTags('Notifications')
 @Controller('notifications')
-@UseGuards(JwtAuthGuard, TenantGuard, DynamicPermissionsGuard)
+@UseGuards(JwtAuthGuard)
 @ControllerPermissions('notifications')
 @ApiBearerAuth()
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
 
   @Get()
   @ApiOperation({ summary: 'Get all notifications for current user' })
