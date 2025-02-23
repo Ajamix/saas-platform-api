@@ -76,7 +76,7 @@ export class SettingsProvider implements OnModuleInit {
       notifications: settings.notificationSettings,
       security: settings.systemSettings,
       features: settings.systemSettings,
-      payment: settings.payment
+      payment: settings.paymentSettings
     };
   }
 

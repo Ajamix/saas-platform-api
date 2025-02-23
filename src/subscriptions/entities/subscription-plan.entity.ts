@@ -9,7 +9,7 @@ export class SubscriptionPlan extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column()
+  @Column({type:'float'})
   price: number;
 
   @Column()

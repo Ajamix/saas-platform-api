@@ -19,7 +19,8 @@ async function bootstrap() {
       'Accept',
       'Origin',
       'Cache-Control',
-      'Last-Event-ID'
+      'Last-Event-ID',
+      'refresh-token'
     ],
     exposedHeaders: [
       'Content-Type',

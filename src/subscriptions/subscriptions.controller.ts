@@ -99,7 +99,7 @@ export class SubscriptionsController {
 
   // TENANT ADMIN OR SUPER ADMIN
   @Get(':id')
-  @UseGuards(TenantGuard, DynamicPermissionsGuard)
+
 
   @ApiOperation({ summary: 'Get subscription by ID' })
   async findOne(@Param('id') id: string, @Request() req) {

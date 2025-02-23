@@ -1,12 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { SettingsProvider } from '../settings/settings.provider';
 import Stripe from 'stripe';
-import { PayPalClient } from '@paypal/checkout-server-sdk';
 
 @Injectable()
 export class PaymentService implements OnModuleInit {
   private stripeClient: Stripe;
-  private paypalClient: PayPalClient;
+  // private paypalClient: PayPalClient;
 
   constructor(private readonly settingsProvider: SettingsProvider) {}
 

@@ -34,11 +34,9 @@ export class SuperAdminService {
 
     return this.superAdminRepository.save(superAdmin);
   }
-  async findSuperAdminByEmail(email: string): Promise<SuperAdmin> {
+  async findSuperAdminByEmail(email: string): Promise<SuperAdmin | null> {
     const superAdmin = await this.superAdminRepository.findOne({ where: { email } });
-    if (!superAdmin) {
-      throw new NotFoundException('Super admin not found');
-    }
+
     return superAdmin;
   }
 
