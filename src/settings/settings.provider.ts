@@ -1,18 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { GlobalSettingsService } from './global-settings/global-settings.service';
 import { TenantSettingsService } from './tenant-settings/tenant-settings.service';
 import { GlobalSetting } from './global-settings/entities/global-setting.entity';
 import { TenantSetting } from './tenant-settings/entities/tenant-setting.entity';
+import { GlobalSettingsSeeder } from '../database/seeders/global-settings.seeder';
+import { SuperAdminSeeder } from '../database/seeders/super-admin.seeder';
+import { PermissionSeeder } from '../database/seeders/permission.seeder';
 
 @Injectable()
-export class SettingsProvider {
+export class SettingsProvider implements OnModuleInit {
+  private readonly logger = new Logger(SettingsProvider.name);
   private globalSettingsCache: GlobalSetting | null = null;
   private tenantSettingsCache: Map<string, TenantSetting> = new Map();
+  private hasSeededCore = false;
 
   constructor(
     private readonly globalSettingsService: GlobalSettingsService,
     private readonly tenantSettingsService: TenantSettingsService,
+    private readonly globalSettingsSeeder: GlobalSettingsSeeder,
+    private readonly superAdminSeeder: SuperAdminSeeder,
+    private readonly permissionSeeder: PermissionSeeder,
   ) {}
+
+  async onModuleInit() {
+    await this.seedCoreData();
+  }
+
+  private async seedCoreData() {
+    if (this.hasSeededCore) return;
+
+    try {
+      // Always seed permissions and superadmin
+      this.logger.log('Seeding permissions...');
+      await this.permissionSeeder.seed();
+      
+      this.logger.log('Seeding superadmin...');
+      await this.superAdminSeeder.seed();
+      
+      this.hasSeededCore = true;
+    } catch (error) {
+      this.logger.error('Error seeding core data:', error.message);
+    }
+  }
 
   async getEffectiveSettings(tenantId?: string): Promise<{
     smtp: any;
@@ -23,23 +52,46 @@ export class SettingsProvider {
     payment?: any;
   }> {
     const globalSettings = await this.getGlobalSettings();
-    const tenantSettings = tenantId ? await this.getTenantSettings(tenantId) : null;
+    if (!tenantId) {
+      return this.transformSettings(globalSettings);
+    }
 
+    const tenantSettings = await this.tenantSettingsService.findByTenant(tenantId);
+    return this.mergeSettings(globalSettings, tenantSettings);
+  }
+
+  async getGlobalSettings() {
+    try {
+      return await this.globalSettingsService.findActive();
+    } catch (error) {
+      this.logger.log('No active global settings found, seeding default settings...');
+      await this.globalSettingsSeeder.seed();
+      return await this.globalSettingsService.findActive();
+    }
+  }
+
+  private transformSettings(settings: any) {
     return {
-      smtp: this.mergeSmtpSettings(globalSettings, tenantSettings),
-      notifications: this.mergeNotificationSettings(globalSettings, tenantSettings),
-      security: this.mergeSecuritySettings(globalSettings, tenantSettings),
-      features: this.mergeFeatureSettings(globalSettings, tenantSettings),
-      ...(tenantSettings?.brandingSettings && { branding: tenantSettings.brandingSettings }),
-      ...(globalSettings?.paymentSettings && { payment: globalSettings.paymentSettings }),
+      smtp: settings.smtpSettings,
+      notifications: settings.notificationSettings,
+      security: settings.systemSettings,
+      features: settings.systemSettings,
+      payment: settings.payment
     };
   }
 
-  private async getGlobalSettings(): Promise<GlobalSetting> {
-    if (!this.globalSettingsCache) {
-      this.globalSettingsCache = await this.globalSettingsService.findActive();
-    }
-    return this.globalSettingsCache;
+  private mergeSettings(globalSettings: any, tenantSettings: any) {
+    const base = this.transformSettings(globalSettings);
+    if (!tenantSettings) return base;
+
+    return {
+      ...base,
+      ...(tenantSettings.smtpSettings && { smtp: tenantSettings.smtpSettings }),
+      ...(tenantSettings.notificationSettings && { notifications: tenantSettings.notificationSettings }),
+      ...(tenantSettings.systemSettings && { security: tenantSettings.systemSettings }),
+      ...(tenantSettings.systemSettings && { features: tenantSettings.systemSettings }),
+      ...(tenantSettings.brandingSettings && { branding: tenantSettings.brandingSettings }),
+    };
   }
 
   private async getTenantSettings(tenantId: string): Promise<TenantSetting | null> {

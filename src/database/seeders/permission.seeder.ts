@@ -16,45 +16,28 @@ export class PermissionSeeder {
   ) {}
 
   async seed() {
-    // First create all permissions
-    const permissions = await this.seedPermissions();
+    try {
+      // Always create permissions
+      this.logger.log('Creating permissions...');
+      const permissions = await this.seedPermissions();
+      this.logger.log(`Created ${permissions.length} permissions`);
 
-    // Find all default roles
-    const defaultRoles = await this.roleRepository.find({
-      where: { isDefault: true },
-      relations: ['permissions']
-    });
-
-    // Update permissions for each default role
-    for (const role of defaultRoles) {
-      this.logger.log(`Updating permissions for default role: ${role.name}`);
-      
-      // Get required permissions based on role name
-      const requiredPermissions = await this.getRequiredPermissionsForRole(role.name);
-      
-      // If role should have all permissions (*)
-      if (requiredPermissions.includes('*')) {
-        this.logger.log(`Granting all permissions to ${role.name}`);
-        role.permissions = permissions;
-        await this.roleRepository.save(role);
-        continue;
+      // Check for roles and assign permissions if they exist
+      const existingRoles = await this.roleRepository.find();
+      if (existingRoles.length > 0) {
+        this.logger.log('Found existing roles, assigning permissions...');
+        for (const role of existingRoles) {
+          this.logger.log(`Updating permissions for role: ${role.name}`);
+          role.permissions = permissions;
+          await this.roleRepository.save(role);
+          this.logger.log(`Added permissions to role ${role.name}`);
+        }
+      } else {
+        this.logger.log('No roles found. Permissions created but not assigned.');
       }
-      
-      // For other roles, filter out permissions they already have
-      const existingPermissionNames = role.permissions.map(p => p.name);
-      const permissionsToAdd = permissions.filter(p => 
-        requiredPermissions.includes(p.name) && !existingPermissionNames.includes(p.name)
-      );
-
-      console.log('Required permissions:', requiredPermissions);
-      console.log('Existing permissions:', existingPermissionNames);
-      console.log('Permissions to add:', permissionsToAdd.map(p => p.name));
-
-      if (permissionsToAdd.length > 0) {
-        role.permissions = [...role.permissions, ...permissionsToAdd];
-        await this.roleRepository.save(role);
-        this.logger.log(`Added ${permissionsToAdd.length} permissions to role ${role.name}`);
-      }
+    } catch (error) {
+      this.logger.error('Error seeding permissions:', error.message);
+      throw error;
     }
   }
 
@@ -156,6 +139,7 @@ export class PermissionSeeder {
         action: 'read',
       },
 
+      // Subscriptions
       {
         name: 'create-subscriptions',
         description: 'Can create subscriptions',
@@ -168,6 +152,7 @@ export class PermissionSeeder {
         resource: 'subscriptions',
         action: 'read',
       },
+
       // Notifications
       {
         name: 'view-notifications',
@@ -180,12 +165,14 @@ export class PermissionSeeder {
         description: 'Can manage notification settings',
         resource: 'notifications',
         action: 'manage',
-      },     {
+      },
+      {
         name: 'clear-notifications',
         description: 'Can clear notifications',
         resource: 'notifications',
         action: 'update',
-      },     {
+      },
+      {
         name: 'delete-notifications',
         description: 'Can delete notifications',
         resource: 'notifications',
