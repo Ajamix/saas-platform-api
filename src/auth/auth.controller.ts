@@ -44,7 +44,8 @@ export class AuthController {
     description: 'Token refreshed successfully',
     schema: {
       properties: {
-        accessToken: { type: 'string' }
+        accessToken: { type: 'string' },
+        refreshToken: { type: 'string' }
       }
     }
   })

@@ -216,6 +216,10 @@ export class AuthService {
           secret: this.configService.get('JWT_SECRET'),
           expiresIn: this.configService.get('JWT_EXPIRATION'),
         }),
+        refreshToken: this.jwtService.sign(payload, {
+          secret: this.configService.get('JWT_REFRESH_SECRET'),
+          expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION'),
+        }),
       };
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
