@@ -96,15 +96,18 @@ export class AdminDashboardService {
   }
 
   private async calculateTotalRevenue(): Promise<number> {
-    const activeSubscriptions = await this.subscriptionRepository.find({
-      where: { status: 'active' },
-      relations: ['plan']
+    const allSubscriptions = await this.subscriptionRepository.find({
+      relations: ['plan'],
     });
 
-    return activeSubscriptions.reduce((total, subscription) => {
-      return total + (subscription.plan?.price || 0);
+    return allSubscriptions.reduce((total, subscription) => {
+      const billingCycles = calculateBillingCycles(subscription);
+      console.log(billingCycles);
+      return total + (subscription.priceAtCreation || 0) * billingCycles;
     }, 0);
   }
+
+
 
   private async getSubscriptionsByPlan(): Promise<PlanStats[]> {
     const plans = await this.subscriptionPlanRepository.find();
@@ -188,7 +191,7 @@ export class AdminDashboardService {
   async getRevenueStats(period: 'daily' | 'weekly' | 'monthly' = 'monthly'): Promise<RevenueStat[]> {
     const now = new Date();
     const startDate = new Date();
-
+  
     switch (period) {
       case 'daily':
         startDate.setDate(startDate.getDate() - 30);
@@ -200,52 +203,84 @@ export class AdminDashboardService {
         startDate.setMonth(startDate.getMonth() - 12);
         break;
     }
-
+  
     const subscriptions = await this.subscriptionRepository.find({
       where: {
-        createdAt: MoreThanOrEqual(startDate),
-        status: 'active'
+        currentPeriodEnd: MoreThanOrEqual(startDate), // Ensure subscriptions that were active during the period are included
       },
       relations: ['plan']
     });
-
+  
     return this.aggregateRevenueStats(subscriptions, period, startDate, now);
   }
+  
 
-  private aggregateRevenueStats(subscriptions: Subscription[], period: string, startDate: Date, endDate: Date): RevenueStat[] {
+  private aggregateRevenueStats(
+    subscriptions: Subscription[],
+    period: string,
+    startDate: Date,
+    endDate: Date
+  ): RevenueStat[] {
     const stats: RevenueStat[] = [];
-    const current = new Date(startDate);
-
+    let current = new Date(startDate);
+  
     while (current <= endDate) {
       const periodStart = new Date(current);
-      let periodEnd: Date;
-
+      let periodEnd = new Date(periodStart);
+  
       switch (period) {
         case 'daily':
-          periodEnd = new Date(current.setDate(current.getDate() + 1));
+          periodEnd.setDate(periodEnd.getDate() + 1);
           break;
         case 'weekly':
-          periodEnd = new Date(current.setDate(current.getDate() + 7));
+          periodEnd.setDate(periodEnd.getDate() + 7);
           break;
         case 'monthly':
-          periodEnd = new Date(current.setMonth(current.getMonth() + 1));
+          periodEnd.setMonth(periodEnd.getMonth() + 1);
           break;
       }
-
-      const periodSubscriptions = subscriptions.filter(sub => 
-        sub.createdAt >= periodStart && sub.createdAt < periodEnd
-      );
-
-      const revenue = periodSubscriptions.reduce((total, sub) => 
-        total + (sub.plan?.price || 0), 0
-      );
-
+  
+      // ✅ Ensure revenue is counted only when a billing cycle starts
+      const revenue = subscriptions.reduce((total, sub) => {
+        const billingCycles = calculateBillingCycles(sub);
+  
+        // ✅ Only count revenue if a billing cycle occurs in this period
+        const cycleStart = new Date(sub.currentPeriodStart);
+        while (cycleStart <= sub.currentPeriodEnd && cycleStart <= endDate) {
+          if (cycleStart >= periodStart && cycleStart < periodEnd) {
+            return total + (sub.priceAtCreation || 0);
+          }
+          cycleStart.setMonth(cycleStart.getMonth() + (sub.plan.interval === 'monthly' ? 1 : 12));
+        }
+        return total;
+      }, 0);
+  
+      // ✅ **Return all periods, even if revenue is 0**
       stats.push({
         period: periodStart.toISOString().split('T')[0],
         revenue
       });
+  
+      // ✅ Move to the next period
+      current = new Date(periodEnd);
     }
-
+  
     return stats;
+  }
+  
+  
+  
+}
+function calculateBillingCycles(subscription: Subscription): number {
+  const { currentPeriodStart, currentPeriodEnd, plan } = subscription;
+  const start = new Date(currentPeriodStart);
+  const end = new Date(currentPeriodEnd);
+
+  if (plan.interval === 'monthly') {
+    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)) + 1;
+  } else if (plan.interval === 'yearly') {
+    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1;
+  } else {
+    throw new Error('Unsupported interval type');
   }
 }
