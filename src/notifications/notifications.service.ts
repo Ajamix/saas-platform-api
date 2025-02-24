@@ -60,9 +60,9 @@ export class NotificationsService {
       const promises: Promise<any>[] = [];
 
       // Send email notification if enabled
-      if (settings.notifications.enableEmailNotifications) {
-        promises.push(this.sendEmailNotification(options));
-      }
+      // if (settings.notifications.enableEmailNotifications) {
+      //   promises.push(this.sendEmailNotification(options));
+      // }
 
       // Create and send in-app notification if enabled
       if (settings.notifications.enableInAppNotifications) {
@@ -116,7 +116,15 @@ export class NotificationsService {
       console.log(`Failed to create notification: ${error.message}`);
     }
   }
-
+  async sendTestNotificationPlease(userId: string) {
+    const testNotification = {
+      type: 'notifications',
+      message: 'This is a test notification',
+      data: { exampleKey: 'exampleValue' },
+    };
+    this.notificationsSse.sendNotificationToUser(userId, testNotification);
+    console.log('Test notification sent to user:', userId);
+  }
   private async sendEmailNotification(options: NotificationOptions) {
     const { type, user, data, tenantId } = options;
     const templateHtml = this.emailTemplatesService.renderTemplate(

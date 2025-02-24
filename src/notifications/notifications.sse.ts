@@ -16,11 +16,18 @@ export class NotificationsSse {
   sendNotificationToUser(userId: string, notification: any) {
     this.logger.debug(`Sending notification to user ${userId}`);
     const subject = this.getSubjectForUser(userId);
+    if (!subject) {
+      this.logger.warn(`No SSE subscription found for user ${userId}`);
+      return;
+    }
+    console.log(subject);
     subject.next({
       type: 'notification',
       data: notification,
-      timestamp: new Date()
+      timestamp: new Date(),
+      event: 'notification'
     });
+    this.logger.debug(`Notification sent to user ${userId}:`, notification);
   }
 
   sendNotificationToTenant(tenantId: string, notification: any) {

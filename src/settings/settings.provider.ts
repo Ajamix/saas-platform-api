@@ -56,7 +56,7 @@ export class SettingsProvider implements OnModuleInit {
       return this.transformSettings(globalSettings);
     }
 
-    const tenantSettings = await this.tenantSettingsService.findByTenant(tenantId);
+    const tenantSettings = null;
     return this.mergeSettings(globalSettings, tenantSettings);
   }
 

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { NotificationsService } from './notifications.service';
+import { NotificationsService, NotificationType } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
 import { DynamicPermissionsGuard } from '../permissions/guards/dynamic-permissions.guard';
@@ -29,6 +29,22 @@ export class NotificationsController {
       message: 'Notification marked as read',
       success: true 
     };
+  }
+
+  @Post('send-test-notification')
+  async sendTestNotification(@Request() req) {
+    const userId = req.body.userId;
+    const notificationData = {
+      type: 'system_update' as NotificationType,
+      user: { id: userId } as any,
+      data: { message: 'This is a test notification' },
+      title: 'Test Notification',
+      message: 'This is a test notification to verify the notification system.',
+      tenantId: "bd627228-b899-4852-84e8-8770adc253c3",
+    };
+  
+    await this.notificationsService.sendNotification(notificationData);
+    return { message: 'Test notification sent', success: true };
   }
 
   @Delete(':id')
