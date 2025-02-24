@@ -55,7 +55,9 @@ export class StripeService {
       cancel_url: cancelUrl,
     });
   }
-
+  async getStripeSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.retrieve(subscriptionId);
+  }
   async constructEvent(payload: Buffer, signature: string): Promise<Stripe.Event> {
     const webhookSecret = await this.getStripeWebhookSecret();
     return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);

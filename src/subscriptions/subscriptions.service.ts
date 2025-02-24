@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, IsNull, In, Not, MoreThan } from 'typeorm';
 import { Subscription } from './entities/subscription.entity';
 import { SubscriptionPlan } from './entities/subscription-plan.entity';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -158,17 +158,53 @@ export class SubscriptionsService {
 
     return updatedSubscription;
   }
+  // async extendActiveSubscriptions(): Promise<void> {
+  //   const now = new Date();
+  //   const upcomingExpirationDate = new Date(now);
+  //   upcomingExpirationDate.setDate(now.getDate() + 1); 
 
+  //   const subscriptions = await this.subscriptionRepository.find({
+  //     where: {
+  //       status: 'active',
+  //       currentPeriodEnd: LessThan(upcomingExpirationDate),
+  //     },
+  //     relations: ['plan'],
+  //   });
+
+  //   for (const subscription of subscriptions) {
+  //     try {
+  //       // Verify the subscription status with Stripe
+  //       const stripeSubscription = await this.stripeService.getStripeSubscription(String(subscription.stripeSubscriptionId));
+
+  //       if (stripeSubscription.status === 'active') {
+  //         // Extend the currentPeriodEnd based on the interval
+  //         if (subscription.plan.interval === 'monthly') {
+  //           subscription.currentPeriodEnd = new Date(subscription.currentPeriodEnd.setMonth(subscription.currentPeriodEnd.getMonth() + 1));
+  //         } else if (subscription.plan.interval === 'yearly') {
+  //           subscription.currentPeriodEnd = new Date(subscription.currentPeriodEnd.setFullYear(subscription.currentPeriodEnd.getFullYear() + 1));
+  //         }
+  //         await this.subscriptionRepository.save(subscription);
+  //       }
+  //     } catch (error) {
+  //       console.error(`Failed to verify subscription ${subscription.id} with Stripe:`, error);
+  //     }
+  //   }
+  // }
   async cancel(id: string): Promise<Subscription> {
     const subscription = await this.findOne(id);
     
     subscription.status = 'canceled';
     subscription.canceledAt = new Date();
-
-    if (subscription.stripeSubscriptionId) {
-      await this.stripeService.cancelStripeSubscription(subscription.stripeSubscriptionId);
- 
+    subscription.cancelAt = subscription.currentPeriodEnd;
+    try{
+      if (subscription.stripeSubscriptionId) {
+        await this.stripeService.cancelStripeSubscription(subscription.stripeSubscriptionId);
+   
+      }
+    }catch(error){
+      console.log(error);
     }
+
     const updatedSubscription = await this.subscriptionRepository.save(subscription);
 
     // Send notification about cancellation
@@ -202,44 +238,73 @@ export class SubscriptionsService {
         status: 'active',
         currentPeriodEnd: LessThan(new Date()),
       },
+      relations: ['plan'],
     });
 
     for (const subscription of expiredSubscriptions) {
-      subscription.status = 'expired';
-      await this.subscriptionRepository.save(subscription);
+      try {
+        // Verify the subscription status with Stripe
+        const stripeSubscription = await this.stripeService.getStripeSubscription(String(subscription.stripeSubscriptionId));
 
-      // Send notification about expiration
-      const tenant = await this.tenantsService.findOne(subscription.tenantId);
-      const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
-      const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
+        if (stripeSubscription.status === 'canceled') {
+          // Mark the subscription as expired if it has been canceled in Stripe
+          subscription.status = 'expired';
+          await this.subscriptionRepository.save(subscription);
 
-      for (const admin of admins) {
-        await this.notificationsService.sendNotification({
-          type: 'payment_reminder',
-          user: admin,
-          data: {
-            companyName: tenant.name,
-            expirationDate: subscription.currentPeriodEnd,
-            billingUrl: '/billing',
-            supportEmail: 'support@example.com',
-          },
-          tenantId: tenant.id,
-          isActionRequired: true,
-          actionUrl: '/billing',
-        });
+          // Send notification about expiration
+          const tenant = await this.tenantsService.findOne(subscription.tenantId);
+          const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
+          const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
+
+          for (const admin of admins) {
+            await this.notificationsService.sendNotification({
+              type: 'subscription_change',
+              user: admin,
+              data: {
+                companyName: tenant.name,
+                isUpgrade: false,
+                isCancellation: true,
+                effectiveDate: subscription.currentPeriodEnd,
+                billingUrl: '/billing',
+                supportEmail: 'support@example.com',
+              },
+              tenantId: tenant.id,
+            });
+          }
+        } else if (stripeSubscription.status === 'active') {
+          // Extend the currentPeriodEnd based on the interval
+          if (subscription.plan.interval === 'monthly') {
+            subscription.currentPeriodEnd = new Date(subscription.currentPeriodEnd.setMonth(subscription.currentPeriodEnd.getMonth() + 1));
+          } else if (subscription.plan.interval === 'yearly') {
+            subscription.currentPeriodEnd = new Date(subscription.currentPeriodEnd.setFullYear(subscription.currentPeriodEnd.getFullYear() + 1));
+          }
+          await this.subscriptionRepository.save(subscription);
+        }
+      } catch (error) {
+        console.error(`Failed to verify subscription ${subscription.id} with Stripe:`, error);
       }
     }
   }
 
+
   async getActiveSubscription(tenantId: string): Promise<Subscription | null> {
     const subscription = await this.subscriptionRepository.findOne({
-      where: {
-        tenantId,
-        status: 'active',
-      },
+      where: [
+        {
+          tenantId,
+          status: 'active',
+          cancelAt: IsNull(), 
+        },
+        {
+          tenantId,
+          status: Not('active'),
+          cancelAt: MoreThan(new Date()), 
+        },
+      ],
       relations: ['plan'],
     });
-
-    return subscription || null;  // Explicitly return null if no subscription found
+  
+    return subscription;
   }
+  
 }

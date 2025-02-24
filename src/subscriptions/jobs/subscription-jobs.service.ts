@@ -11,7 +11,17 @@ export class SubscriptionJobsService {
     private readonly subscriptionsQueue: Queue,
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
-
+   // Run every day to extend active subscriptions
+  //  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  //  async scheduleExtendActiveSubscriptions() {
+  //    await this.subscriptionsQueue.add('extend-active-subscriptions', {}, {
+  //      attempts: 3,
+  //      backoff: {
+  //        type: 'exponential',
+  //        delay: 60000,
+  //      },
+  //    });
+  //  }
   // Run every day at midnight
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async scheduleSubscriptionChecks() {

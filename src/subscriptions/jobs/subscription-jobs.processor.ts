@@ -16,7 +16,17 @@ export class SubscriptionJobsProcessor {
     private readonly tenantsService: TenantsService,
     private readonly usersService: UsersService,
   ) {}
-
+  // @Process('extend-active-subscriptions')
+  // async handleExtendActiveSubscriptions(job: Job) {
+  //   this.logger.debug('Extending active subscriptions...');
+  //   try {
+  //     await this.subscriptionsService.extendActiveSubscriptions();
+  //     this.logger.debug('Active subscriptions extended successfully');
+  //   } catch (error) {
+  //     this.logger.error('Error extending active subscriptions:', error);
+  //     throw error;
+  //   }
+  // }
   @Process('check-expired-subscriptions')
   async handleExpiredSubscriptions(job: Job) {
     this.logger.debug('Checking for expired subscriptions...');
