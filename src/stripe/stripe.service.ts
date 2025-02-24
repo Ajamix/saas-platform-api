@@ -114,16 +114,32 @@ export class StripeService {
     }
 
     // Create a new Subscription entity
-    const subscription = this.subscriptionRepository.create({
-      tenantId: user?.tenant.id, // Assuming you have a way to determine the tenant
-      planId: plan.id,
-      status: 'active',
-      currentPeriodStart: new Date(),
-      currentPeriodEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Example for yearly
-      stripeCustomerId: customerEmail,
-      stripeSubscriptionId: subscriptionId,
-    });
+   
+   // Create a new Subscription entity
+   const subscription = this.subscriptionRepository.create({
+    tenantId: user?.tenant.id, // Assuming you have a way to determine the tenant
+    planId: plan.id,
+    status: 'active',
+    currentPeriodStart: new Date(),
+    currentPeriodEnd: calculateCurrentPeriodEnd(plan.interval),
+    stripeCustomerId: customerEmail,
+    stripeSubscriptionId: subscriptionId,
+    priceAtCreation: plan.price, // Set the price at the time of creation
+  });
+
+  await this.subscriptionRepository.save(subscription);
 
     await this.subscriptionRepository.save(subscription);
+  }
+  
+}
+function calculateCurrentPeriodEnd(interval: string): Date {
+  const currentDate = new Date();
+  if (interval === 'monthly') {
+    return new Date(currentDate.setMonth(currentDate.getMonth() + 1));
+  } else if (interval === 'yearly') {
+    return new Date(currentDate.setFullYear(currentDate.getFullYear() + 1));
+  } else {
+    throw new Error('Unsupported interval type');
   }
 }

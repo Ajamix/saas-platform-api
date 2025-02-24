@@ -203,13 +203,48 @@ export class AuthService {
         secret: this.configService.get('JWT_REFRESH_SECRET'),
       });
 
-      const payload = { 
-        email: decoded.email, 
-        sub: decoded.sub,
-        tenantId: decoded.tenantId,
-        isSuperAdmin: decoded.isSuperAdmin,
-        hasSetupProfile: decoded.hasSetupProfile // Preserve the hasSetupProfile status
-      };
+      let payload;
+      if (decoded.isSuperAdmin) {
+        // Handle super admin refresh
+        const superAdmin = await this.superAdminService.findSuperAdminByEmail(decoded.email);
+        if (!superAdmin) {
+          throw new UnauthorizedException('Invalid refresh token');
+        }
+
+        payload = { 
+          email: superAdmin.email, 
+          sub: superAdmin.id,
+          isSuperAdmin: true,
+          hasSetupProfile: true // Super admins always have profile setup
+        };
+      } else {
+        // Handle tenant user refresh
+        const tenant = await this.tenantsService.findOne(decoded.tenantId);
+        const user = await this.usersService.findByEmailAndTenant(decoded.email, tenant.id);
+        if (!user || Array.isArray(user)) {
+          throw new UnauthorizedException('Invalid refresh token');
+        }
+
+        const permissions = user.roles
+          .flatMap(role => role.permissions)
+          .reduce((acc, permission) => {
+            if (!acc[permission.resource]) {
+              acc[permission.resource] = [];
+            }
+            if (!acc[permission.resource].includes(permission.action)) {
+              acc[permission.resource].push(permission.action);
+            }
+            return acc;
+          }, {} as Record<string, string[]>);
+
+        payload = { 
+          email: user.email, 
+          sub: user.id,
+          tenantId: tenant.id,
+          hasSetupProfile: user.hasSetupProfile,
+          permissions
+        };
+      }
 
       return {
         accessToken: this.jwtService.sign(payload, {

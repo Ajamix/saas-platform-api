@@ -49,4 +49,7 @@ export class Subscription extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
+
+  @Column({ type: 'float' }) 
+  priceAtCreation: number;
 }

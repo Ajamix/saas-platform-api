@@ -40,6 +40,22 @@ export class GlobalSettingsService {
     return settings;
   }
 
+  async findActivePublicPaymentSettings() {
+    const settings = await this.globalSettingRepository.findOne({
+      where: { isActive: true },
+      select: ['paymentSettings'], 
+    });
+  
+    if (!settings || !settings.paymentSettings) {
+      return null;
+    }
+  
+    return {
+      currency: settings.paymentSettings.currency,
+      stripeEnabled: settings.paymentSettings.stripeEnabled,
+      paypalEnabled: settings.paymentSettings.paypalEnabled,
+    };
+  }
   async findActive() {
     const settings = await this.globalSettingRepository.findOne({
       where: { isActive: true },

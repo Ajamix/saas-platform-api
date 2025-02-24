@@ -16,12 +16,13 @@ interface RequestWithUser extends Request {
 
 @ApiTags('Global Settings')
 @Controller('global-settings')
-@UseGuards(JwtAuthGuard, SuperAdminGuard)
-@ApiBearerAuth()
 export class GlobalSettingsController {
   constructor(private readonly globalSettingsService: GlobalSettingsService) {}
 
+  // ✅ PROTECTED ROUTES (Requires Super Admin Access)
   @Post()
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create global settings' })
   @ApiBody({ schema: GlobalSettingsSchema })
   @ApiResponse({ 
@@ -34,6 +35,8 @@ export class GlobalSettingsController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all global settings' })
   @ApiResponse({ status: 200, description: 'Returns all global settings' })
   async findAll() {
@@ -41,6 +44,8 @@ export class GlobalSettingsController {
   }
 
   @Get('active')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get active global settings' })
   @ApiResponse({ status: 200, description: 'Returns active global settings' })
   async findActive() {
@@ -48,6 +53,8 @@ export class GlobalSettingsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get global settings by ID' })
   @ApiResponse({ status: 200, description: 'Returns global settings by ID' })
   async findOne(@Param('id') id: string) {
@@ -55,6 +62,8 @@ export class GlobalSettingsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update global settings' })
   @ApiResponse({ status: 200, description: 'Global settings updated successfully' })
   async update(
@@ -66,6 +75,8 @@ export class GlobalSettingsController {
   }
 
   @Patch(':id/smtp')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update SMTP settings' })
   @ApiResponse({ status: 200, description: 'SMTP settings updated successfully' })
   async updateSmtpSettings(
@@ -77,6 +88,8 @@ export class GlobalSettingsController {
   }
 
   @Patch(':id/notifications')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update notification settings' })
   @ApiResponse({ status: 200, description: 'Notification settings updated successfully' })
   async updateNotificationSettings(
@@ -88,6 +101,8 @@ export class GlobalSettingsController {
   }
 
   @Patch(':id/payment')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update payment settings' })
   @ApiResponse({ status: 200, description: 'Payment settings updated successfully' })
   async updatePaymentSettings(
@@ -99,9 +114,19 @@ export class GlobalSettingsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete global settings' })
   @ApiResponse({ status: 200, description: 'Global settings deleted successfully' })
   async remove(@Param('id') id: string, @Req() request: RequestWithUser) {
     return this.globalSettingsService.remove(id, request.user, request);
+  }
+
+  // ✅ PUBLIC ROUTE (NO GUARDS REQUIRED)
+  @Get('public/payment-settings')
+  @ApiOperation({ summary: 'Get public payment settings (currency, Stripe enabled, PayPal enabled)' })
+  @ApiResponse({ status: 200, description: 'Returns public payment settings' })
+  async findActivePublicPaymentSettings() {
+    return this.globalSettingsService.findActivePublicPaymentSettings();
   }
 }
