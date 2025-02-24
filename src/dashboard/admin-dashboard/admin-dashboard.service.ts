@@ -211,16 +211,35 @@ export class AdminDashboardService {
       relations: ['plan']
     });
   
-    return this.aggregateRevenueStats(subscriptions, period, startDate, now);
+    return this.aggregateRevenueStats(subscriptions, period);
   }
   
-
   private aggregateRevenueStats(
     subscriptions: Subscription[],
-    period: string,
-    startDate: Date,
-    endDate: Date
+    period: string
   ): RevenueStat[] {
+    if (subscriptions.length === 0) return [];
+  
+    // ✅ Find the latest subscription created
+    const latestSubscriptionDate = subscriptions.reduce((latest, sub) => {
+      return sub.createdAt > latest ? sub.createdAt : latest;
+    }, subscriptions[0].createdAt);
+  
+    // ✅ Set the start date as (latest - 10 periods)
+    let startDate = new Date(latestSubscriptionDate);
+    switch (period) {
+      case 'daily':
+        startDate.setDate(startDate.getDate() - 10);
+        break;
+      case 'weekly':
+        startDate.setDate(startDate.getDate() - 10 * 7);
+        break;
+      case 'monthly':
+        startDate.setMonth(startDate.getMonth() - 10);
+        break;
+    }
+  
+    const endDate = new Date(latestSubscriptionDate);
     const stats: RevenueStat[] = [];
     let current = new Date(startDate);
   
@@ -236,37 +255,47 @@ export class AdminDashboardService {
           periodEnd.setDate(periodEnd.getDate() + 7);
           break;
         case 'monthly':
+          periodStart.setDate(1); // ✅ Ensure the month always starts on the 1st
           periodEnd.setMonth(periodEnd.getMonth() + 1);
+          periodEnd.setDate(1);
           break;
       }
   
-      // ✅ Ensure revenue is counted only when a billing cycle starts
       const revenue = subscriptions.reduce((total, sub) => {
-        const billingCycles = calculateBillingCycles(sub);
+        let cycleStart = new Date(sub.currentPeriodStart);
   
-        // ✅ Only count revenue if a billing cycle occurs in this period
-        const cycleStart = new Date(sub.currentPeriodStart);
         while (cycleStart <= sub.currentPeriodEnd && cycleStart <= endDate) {
+          const monthStart = new Date(cycleStart.getFullYear(), cycleStart.getMonth(), 1);
+          const nextMonthStart = new Date(monthStart);
+          nextMonthStart.setMonth(nextMonthStart.getMonth() + 1);
+  
+          console.log(`Checking Subscription: ${sub.currentPeriodStart} to ${sub.currentPeriodEnd}`);
+          console.log(`Cycle Start: ${cycleStart}`);
+          console.log(`Checking Between: ${monthStart} - ${nextMonthStart}`);
+  
           if (cycleStart >= periodStart && cycleStart < periodEnd) {
-            return total + (sub.priceAtCreation || 0);
+            console.log(`✅ Adding Revenue for ${monthStart}`);
+            total += sub.priceAtCreation || 0;
           }
+  
           cycleStart.setMonth(cycleStart.getMonth() + (sub.plan.interval === 'monthly' ? 1 : 12));
         }
+  
         return total;
       }, 0);
   
-      // ✅ **Return all periods, even if revenue is 0**
       stats.push({
         period: periodStart.toISOString().split('T')[0],
         revenue
       });
   
-      // ✅ Move to the next period
       current = new Date(periodEnd);
     }
   
     return stats;
   }
+  
+  
   
   
   
