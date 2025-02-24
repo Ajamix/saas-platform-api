@@ -14,6 +14,6 @@ import { SuperAdminModule } from '../../super-admin/super-admin.module';
   ],
   controllers: [GlobalSettingsController],
   providers: [GlobalSettingsService],
-  exports: [GlobalSettingsService],
+  exports: [GlobalSettingsService, TypeOrmModule],
 })
 export class GlobalSettingsModule {}

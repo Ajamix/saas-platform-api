@@ -10,6 +10,7 @@ import { Request } from 'express';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import { Permission } from '../permissions/entities/permission.entity';
+import { GlobalSetting } from '../settings/global-settings/entities/global-setting.entity';
 export interface TenantWithUserCount {
   id: string;
   name: string;
@@ -30,6 +31,8 @@ export class TenantsService {
     private readonly permissionRepository: Repository<Permission>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(GlobalSetting)
+    private readonly globalSettingRepository: Repository<GlobalSetting>,
   ) {}
 
   async createTenantAdminRole(tenant: Tenant, queryRunner?: QueryRunner): Promise<Role> {
@@ -39,9 +42,13 @@ export class TenantsService {
     // Get all available permissions
     const allPermissions = await permRepo.find();
 
-    // Create admin role
+    // Retrieve the defaultUserRole from GlobalSetting
+    const globalSetting = await this.globalSettingRepository.findOne({ where: { isActive: true }, select: ['systemSettings'] });
+    const defaultUserRole = globalSetting?.systemSettings?.defaultUserRole || 'Admin';
+
+    // Create admin role using defaultUserRole
     const adminRole = repo.create({
-      name: 'Admin',
+      name: defaultUserRole,
       description: 'Tenant Administrator with full access',
       tenant,
       isDefault: true,
@@ -193,5 +200,10 @@ export class TenantsService {
     }
 
 
+  }
+
+  async getAllowUserRegistration(): Promise<boolean> {
+    const globalSetting = await this.globalSettingRepository.findOne({ where: { isActive: true }, select: ['systemSettings'] });
+    return globalSetting?.systemSettings?.allowUserRegistration ?? false;
   }
 }

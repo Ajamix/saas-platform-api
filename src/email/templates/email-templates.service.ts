@@ -11,7 +11,7 @@ export class EmailTemplatesService implements OnModuleInit {
   constructor() {
     // Use src in development and dist in production
     const baseDir = process.env.NODE_ENV === 'production' ? 'dist' : 'src';
-    this.templatesDir = join(process.cwd(), 'backend', baseDir, 'email', 'templates', 'views');
+    this.templatesDir = join(process.cwd(), baseDir, 'email', 'templates', 'views');
   }
 
   async onModuleInit() {

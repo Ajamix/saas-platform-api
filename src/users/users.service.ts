@@ -8,6 +8,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TenantsService } from '../tenants/tenants.service';
 import * as bcrypt from 'bcrypt';
+import { VerificationToken } from './entities/verification-token.entity';
+import { randomBytes } from 'crypto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class UsersService {
@@ -16,8 +19,11 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    @InjectRepository(VerificationToken)
+    private readonly verificationTokenRepository: Repository<VerificationToken>,
     private readonly notificationsService: NotificationsService,
     private readonly tenantsService: TenantsService,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createUserDto: CreateUserDto, queryRunner?: QueryRunner): Promise<User> {
@@ -230,5 +236,37 @@ export class UsersService {
     }
 
     await this.userRepository.remove(user);
+  }
+
+  async generateVerificationToken(user: User): Promise<VerificationToken> {
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
+
+    const verificationToken = this.verificationTokenRepository.create({
+      token,
+      user,
+      expiresAt,
+    });
+
+    return await this.verificationTokenRepository.save(verificationToken);
+  }
+
+  async resendVerificationEmail(user: User): Promise<{ message: string, waitTime?: number }> {
+    const existingToken = await this.verificationTokenRepository.findOne({
+      where: { user },
+      order: { createdAt: 'DESC' },
+    });
+
+    const now = new Date();
+    if (existingToken && (now.getTime() - existingToken.createdAt.getTime()) < 60000) {
+      const waitTime = 60 - Math.floor((now.getTime() - existingToken.createdAt.getTime()) / 1000);
+      return { message: 'Please wait before resending the verification email.', waitTime };
+    }
+
+    const newToken = await this.generateVerificationToken(user);
+    await this.emailService.sendVerificationEmail(user.email, newToken.token);
+
+    return { message: 'Verification email sent successfully.' };
   }
 }

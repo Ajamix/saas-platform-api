@@ -63,4 +63,20 @@ export class AuthController {
   async getProfile(@Request() req) {
     return req.user;
   }
+
+  @Get('verify-email')
+  @ApiOperation({ summary: 'Verify email address' })
+  async verifyEmail(@Request() req) {
+    const token = req.query.token;
+    return this.authService.verifyEmail(token);
+  }
+
+  @Get('resend-verification-email')
+  @ApiOperation({ summary: 'Resend verification email' })
+  @ApiResponse({ status: 200, description: 'Verification email sent successfully' })
+  @ApiResponse({ status: 400, description: 'Please wait before resending the verification email' })
+  async resendVerificationEmail(@Request() req) {
+    const user = req.user; // Assume user is authenticated and available in the request
+    return this.authService.resendVerificationEmail(user);
+  }
 }

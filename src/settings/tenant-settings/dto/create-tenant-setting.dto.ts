@@ -126,7 +126,7 @@ export class SecuritySettingsDto {
   passwordPolicy: TenantPasswordPolicyDto;
 
   @IsNumber()
-  @Min(300)
+  @Min(10)
   sessionTimeout: number;
 
   @IsArray()

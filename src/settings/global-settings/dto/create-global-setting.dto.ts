@@ -269,7 +269,7 @@ export class SystemSettingsDto {
   passwordPolicy: PasswordPolicyDto;
 
   @IsNumber()
-  @Min(300) // 5 minutes minimum
+  @Min(10) // 5 minutes minimum
   sessionTimeout: number;
 }
 

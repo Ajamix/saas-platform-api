@@ -36,7 +36,7 @@ export const GlobalSettingsSchema = {
       maintenanceMessage: "System under maintenance",
       allowUserRegistration: true,
       requireEmailVerification: true,
-      defaultUserRole: "user",
+      defaultUserRole: "Admin",
       passwordPolicy: {
         minLength: 8,
         requireNumbers: true,
@@ -44,7 +44,7 @@ export const GlobalSettingsSchema = {
         requireUppercase: true,
         requireLowercase: true
       },
-      sessionTimeout: 3600
+      sessionTimeout: 15
     }
   }
 };

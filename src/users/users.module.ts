@@ -8,14 +8,19 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TenantsModule } from '../tenants/tenants.module';
 import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
 import { Role } from '../roles/entities/role.entity';
+import { GlobalSettingsModule } from '../settings/global-settings/global-settings.module';
+import { VerificationToken } from './entities/verification-token.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role]),
+    TypeOrmModule.forFeature([User, Role, VerificationToken]),
     SuperAdminModule,
     forwardRef(() => NotificationsModule),
     TenantsModule,
     ActivityLogsModule,
+    GlobalSettingsModule,
+    EmailModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

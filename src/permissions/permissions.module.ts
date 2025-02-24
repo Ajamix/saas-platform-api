@@ -4,11 +4,13 @@ import { PermissionsService } from './permissions.service';
 import { PermissionsController } from './permissions.controller';
 import { Permission } from './entities/permission.entity';
 import { TenantsModule } from '../tenants/tenants.module';
+import { GlobalSettingsModule } from '../settings/global-settings/global-settings.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Permission]),
     TenantsModule,
+    GlobalSettingsModule,
   ],
   controllers: [PermissionsController],
   providers: [PermissionsService],

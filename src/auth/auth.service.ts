@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +12,7 @@ import { RegisterDto } from './dto/register.dto';
 import { User } from '../users/entities/user.entity';
 import { SuperAdmin } from '../users/entities/super-admin.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { VerificationToken } from '../users/entities/verification-token.entity';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +23,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
+    @InjectRepository(VerificationToken)
+    private readonly verificationTokenRepository: Repository<VerificationToken>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   private async validateSuperAdmin(email: string, password: string): Promise<SuperAdmin | null> {
@@ -102,6 +107,10 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (!user.isVerified) {
+      const resendResult = await this.usersService.resendVerificationEmail(user);
+      throw new ForbiddenException(`Please verify your email before logging in. ${resendResult.message}`);
+    }
     const permissions = user.roles
     .flatMap(role => role.permissions)
     .reduce((acc, permission) => {
@@ -141,6 +150,12 @@ export class AuthService {
     await queryRunner.startTransaction();
 
     try {
+      const allowUserRegistration = await this.tenantsService.getAllowUserRegistration();
+
+      if (!allowUserRegistration) {
+        throw new ForbiddenException('User registration is currently disabled.');
+      }
+
       // Check if tenant exists (use regular repository for this check)
       const existingTenant = await this.tenantsService.findBySubdomain(
         registerDto.tenant.subdomain
@@ -259,5 +274,28 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const verificationToken = await this.verificationTokenRepository.findOne({
+      where: { token },
+      relations: ['user'],
+    });
+
+    if (!verificationToken || verificationToken.expiresAt < new Date()) {
+      throw new NotFoundException('Invalid or expired verification token');
+    }
+
+    const user = verificationToken.user;
+    user.isVerified = true;
+    await this.userRepository.save(user);
+
+    await this.verificationTokenRepository.remove(verificationToken);
+
+    return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationEmail(user: User): Promise<{ message: string, waitTime?: number }> {
+    return this.usersService.resendVerificationEmail(user);
   }
 }

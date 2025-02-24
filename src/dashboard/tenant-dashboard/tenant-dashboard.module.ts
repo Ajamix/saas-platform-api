@@ -7,6 +7,7 @@ import { Tenant } from '../../tenants/entities/tenant.entity';
 import { Subscription } from '../../subscriptions/entities/subscription.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { TenantsModule } from '../../tenants/tenants.module';
+import { GlobalSettingsModule } from '../../settings/global-settings/global-settings.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { TenantsModule } from '../../tenants/tenants.module';
       Role
     ]),
     TenantsModule,
+    GlobalSettingsModule,
   ],
   controllers: [TenantDashboardController],
   providers: [TenantDashboardService]

@@ -4,6 +4,7 @@ import { Tenant } from '../../tenants/entities/tenant.entity';
 import { Role } from '../../roles/entities/role.entity';
 import { Profile } from '../../profiles/entities/profile.entity';
 import { Exclude } from 'class-transformer';
+import { VerificationToken } from './verification-token.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -26,6 +27,9 @@ export class User extends BaseEntity {
   @Column({ default: false })
   isSuperAdmin: boolean;
 
+  @Column({ default: false })
+  isVerified: boolean;
+
   @ManyToOne(() => Tenant, tenant => tenant.users, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
@@ -46,4 +50,7 @@ export class User extends BaseEntity {
 
   @OneToOne(() => Profile, profile => profile.user)
   profile: Profile;
+
+  @OneToMany(() => VerificationToken, token => token.user)
+  verificationTokens: VerificationToken[];
 }

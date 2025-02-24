@@ -52,7 +52,7 @@ export class GlobalSettingsSeeder {
           maintenanceMessage: '',
           allowUserRegistration: true,
           requireEmailVerification: true,
-          defaultUserRole: 'user',
+          defaultUserRole: 'Admin',
           passwordPolicy: {
             minLength: 8,
             requireNumbers: true,
@@ -60,7 +60,7 @@ export class GlobalSettingsSeeder {
             requireUppercase: true,
             requireLowercase: true,
           },
-          sessionTimeout: 3600,
+          sessionTimeout: 15,
         },
         isActive: true,
       });

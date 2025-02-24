@@ -198,17 +198,5 @@ export class PermissionSeeder {
     return savedPermissions;
   }
 
-  private async getRequiredPermissionsForRole(roleName: string): Promise<string[]> {
-    // Define required permissions based on role name
-    switch (roleName.toLowerCase()) {
-      case 'admin':
-        return ['*']; // All permissions
-      case 'user':
-        return ['view-notifications', 'manage-notifications', 'clear-notifications'];
-      case 'manager':
-        return ['view-users', 'create-users', 'view-roles', 'view-activity-logs'];
-      default:
-        return [];
-    }
-  }
+
 } 

@@ -269,12 +269,7 @@ export class AdminDashboardService {
           const nextMonthStart = new Date(monthStart);
           nextMonthStart.setMonth(nextMonthStart.getMonth() + 1);
   
-          console.log(`Checking Subscription: ${sub.currentPeriodStart} to ${sub.currentPeriodEnd}`);
-          console.log(`Cycle Start: ${cycleStart}`);
-          console.log(`Checking Between: ${monthStart} - ${nextMonthStart}`);
-  
           if (cycleStart >= periodStart && cycleStart < periodEnd) {
-            console.log(`✅ Adding Revenue for ${monthStart}`);
             total += sub.priceAtCreation || 0;
           }
   
