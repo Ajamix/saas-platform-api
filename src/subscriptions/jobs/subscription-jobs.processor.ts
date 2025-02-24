@@ -15,7 +15,7 @@ export class SubscriptionJobsProcessor {
     private readonly notificationsService: NotificationsService,
     private readonly tenantsService: TenantsService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
   // @Process('extend-active-subscriptions')
   // async handleExtendActiveSubscriptions(job: Job) {
   //   this.logger.debug('Extending active subscriptions...');
@@ -46,33 +46,36 @@ export class SubscriptionJobsProcessor {
       const subscriptions = await this.subscriptionsService.findAll();
       const now = new Date();
 
-      for (const subscription of subscriptions) {
+      for (const subscription of subscriptions.data) {
         if (subscription.status === 'active') {
-          const daysUntilExpiration = Math.ceil(
-            (subscription.currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-          );
 
-          // Send reminder 7 days before expiration
-          if (daysUntilExpiration === 7) {
-            const tenant = await this.tenantsService.findOne(subscription.tenantId);
-            const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
-            const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
+          if (subscription.currentPeriodEnd) {
+            const daysUntilExpiration = Math.ceil(
+              (subscription.currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+            );
 
-            for (const admin of admins) {
-              await this.notificationsService.sendNotification({
-                type: 'payment_reminder',
-                user: admin,
-                data: {
-                  companyName: tenant.name,
-                  daysRemaining: daysUntilExpiration,
-                  expirationDate: subscription.currentPeriodEnd,
-                  billingUrl: '/billing',
-                  supportEmail: 'support@example.com',
-                },
-                tenantId: tenant.id,
-                isActionRequired: true,
-                actionUrl: '/billing',
-              });
+            // Send reminder 7 days before expiration
+            if (daysUntilExpiration === 7) {
+              const tenant = await this.tenantsService.findOne(String(subscription.tenantId));
+              const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
+              const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
+
+              for (const admin of admins) {
+                await this.notificationsService.sendNotification({
+                  type: 'payment_reminder',
+                  user: admin,
+                  data: {
+                    companyName: tenant.name,
+                    daysRemaining: daysUntilExpiration,
+                    expirationDate: subscription.currentPeriodEnd,
+                    billingUrl: '/billing',
+                    supportEmail: 'support@example.com',
+                  },
+                  tenantId: tenant.id,
+                  isActionRequired: true,
+                  actionUrl: '/billing',
+                });
+              }
             }
           }
         }

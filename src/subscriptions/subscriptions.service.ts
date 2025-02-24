@@ -80,10 +80,30 @@ export class SubscriptionsService {
     return savedSubscription;
   }
 
-  async findAll(): Promise<Subscription[]> {
-    return this.subscriptionRepository.find({
-      relations: ['tenant', 'plan'],
-    });
+  async findAll(page: number = 1, limit: number = 10): Promise<{ data: Partial<Subscription>[], total: number }> {
+    const [result, total] = await this.subscriptionRepository.createQueryBuilder('subscription')
+      .leftJoin('subscription.tenant', 'tenant')
+      .leftJoin('subscription.plan', 'plan')
+      .select([
+        'subscription.id',
+        'subscription.status',
+        'subscription.currentPeriodStart',
+        'subscription.currentPeriodEnd',
+        'tenant.id',
+        'tenant.name',
+        'plan.id',
+        'plan.name',
+        'plan.price',
+        'plan.interval',
+      ])
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: result,
+      total,
+    };
   }
 
   async findOne(id: string): Promise<Subscription> {

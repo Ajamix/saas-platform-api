@@ -52,13 +52,20 @@ export class SubscriptionsController {
   }
 
   // SUPER ADMIN ONLY
-  @Get('all')
-  @UseGuards(SuperAdminGuard)
-  @ApiOperation({ summary: 'Get all subscriptions (Super Admin only)' })
-  async findAll() {
-    const subscriptions = await this.subscriptionsService.findAll();
-    return { data: subscriptions };
-  }
+   // SUPER ADMIN ONLY
+   @Get('all')
+   @UseGuards(SuperAdminGuard)
+   @ApiOperation({ summary: 'Get all subscriptions (Super Admin only)' })
+   async findAll(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
+     const { data: subscriptions, total } = await this.subscriptionsService.findAll(page, limit);
+     return {
+       data: subscriptions,
+       total,
+       page,
+       limit,
+       totalPages: Math.ceil(total / limit),
+     };
+   }
 
   // TENANT ADMIN ONLY
   @Get('tenant')
