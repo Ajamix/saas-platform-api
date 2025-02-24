@@ -12,7 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { TenantsService } from './tenants.service';
+import { TenantsService, TenantWithUserCount } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -65,7 +65,7 @@ export class TenantsController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
-  ) {
+  ): Promise<{ data: TenantWithUserCount[]; total: number; page: number; limit: number; totalPages: number }> {
     return this.tenantsService.findAll(page, limit, search);
   }
 

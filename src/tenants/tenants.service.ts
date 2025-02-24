@@ -10,7 +10,15 @@ import { Request } from 'express';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
 import { Permission } from '../permissions/entities/permission.entity';
-
+export interface TenantWithUserCount {
+  id: string;
+  name: string;
+  subdomain: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  totalUsers: number; // ✅ Custom field for user count
+}
 @Injectable()
 export class TenantsService {
   constructor(
@@ -79,63 +87,64 @@ export class TenantsService {
   }
 
   async findAll(page: number = 1, limit: number = 10, search?: string): Promise<{ 
-    data: Tenant[],
+    data: TenantWithUserCount[],
     total: number,
     page: number,
     limit: number,
     totalPages: number
   }> {
     const skip = (page - 1) * limit;
-
+  
     // Build where condition for search
     const whereCondition: FindOptionsWhere<Tenant> = {};
     if (search) {
       whereCondition.name = Like(`%${search}%`);
-  
     }
-
+  
     // Get total count
     const total = await this.tenantRepository.count({
       where: whereCondition,
     });
-
+  
     // Calculate total pages
     const totalPages = Math.ceil(total / limit);
-
+  
     // Fetch paginated data
-    const data = await this.tenantRepository.find({
-      where: whereCondition,
-      relations: ['users'],
-      select: {
-        id: true,
-        name: true,
-        subdomain: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        users: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          isActive: true
-        }
-      },
-      skip,
-      take: limit,
-      order: {
-        createdAt: 'DESC',
-      },
-    });
-
+    const data = await this.tenantRepository
+      .createQueryBuilder("tenant")
+      .leftJoin("tenant.users", "user") // ✅ We do NOT select user.id anymore
+      .select([
+        "tenant.id",
+        "tenant.name",
+        "tenant.subdomain",
+        "tenant.isActive",
+        "tenant.createdAt",
+        "tenant.updatedAt"
+      ])
+      .addSelect("COUNT(user.id)", "totalUsers") // ✅ Get total users directly from the DB
+      .groupBy("tenant.id") // ✅ Group by tenant ID to aggregate correctly
+      .skip(skip)
+      .take(limit)
+      .orderBy("tenant.createdAt", "DESC")
+      .getRawMany(); // ✅ Fetch as raw data to include the count
+  
     return {
-      data,
+      data: data.map(tenant => ({
+        id: tenant.tenant_id,
+        name: tenant.tenant_name,
+        subdomain: tenant.tenant_subdomain,
+        isActive: tenant.tenant_isActive,
+        createdAt: tenant.tenant_createdAt,
+        updatedAt: tenant.tenant_updatedAt,
+        totalUsers: Number(tenant.totalUsers), // ✅ Convert totalUsers to a number
+      })),
       total,
       page,
       limit,
       totalPages,
     };
   }
+  
 
   async findOne(id: string): Promise<Tenant> {
     const tenant = await this.tenantRepository.findOne({
