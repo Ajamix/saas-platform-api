@@ -20,4 +20,10 @@ export class SubscriptionPlan extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  stripeLink: string;
+
+  @Column({ type: 'text', nullable: true })
+  stripeProductId: string;
 } 

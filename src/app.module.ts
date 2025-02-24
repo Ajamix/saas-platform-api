@@ -23,6 +23,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ActivityLoggerInterceptor } from './common/interceptors/activity-logger.interceptor';
 import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { RolesModule } from './roles/roles.module';
     DatabaseSeederModule,
     PermissionsModule,
     RolesModule,
+    StripeModule,
   ],
   // controllers: [AppController],
   providers: [

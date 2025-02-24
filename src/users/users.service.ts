@@ -127,8 +127,8 @@ export class UsersService {
   async findByEmailAndTenant(email: string | null, tenantId: string): Promise<User | User[]> {
     if (email) {
       const user = await this.userRepository.findOne({
-        where: { email, tenantId },
-        relations: ['tenant', 'roles','roles.permissions'],
+        where: { email, tenantId,roles:{name:'Admin'} },
+        relations: ['tenant', 'roles'],
       });
 
       if (!user) {
@@ -140,7 +140,7 @@ export class UsersService {
 
     // If no email provided, return all users for the tenant
     return this.userRepository.find({
-      where: { tenantId },
+      where: { tenantId,roles:{name:'Admin'} },
       relations: ['tenant', 'roles'],
     });
   }

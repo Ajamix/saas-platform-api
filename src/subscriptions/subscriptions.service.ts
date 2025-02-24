@@ -8,6 +8,7 @@ import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { StripeService } from 'src/stripe/stripe.service';
 
 @Injectable()
 export class SubscriptionsService {
@@ -18,7 +19,8 @@ export class SubscriptionsService {
     private readonly subscriptionPlanRepository: Repository<SubscriptionPlan>,
     private readonly notificationsService: NotificationsService,
     private readonly usersService: UsersService,
-    private readonly tenantsService: TenantsService,
+    private readonly tenantsService: TenantsService,  
+    private readonly stripeService: StripeService,
   ) {}
 
   async create(createSubscriptionDto: CreateSubscriptionDto): Promise<Subscription> {
@@ -45,11 +47,15 @@ export class SubscriptionsService {
 
     const subscription = this.subscriptionRepository.create(createSubscriptionDto);
     const savedSubscription = await this.subscriptionRepository.save(subscription);
+      // Cancel the subscription in Stripe if stripeSubscriptionId exists
+      if (subscription.stripeSubscriptionId) {
+          await this.stripeService.cancelStripeSubscription(subscription.stripeSubscriptionId);
+      }
 
-    // Send notification to tenant admin
-    const tenant = await this.tenantsService.findOne(createSubscriptionDto.tenantId);
-    const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
-    const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
+      // Send notification to tenant admin
+      const tenant = await this.tenantsService.findOne(createSubscriptionDto.tenantId);
+      const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
+      const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
 
     for (const admin of admins) {
       await this.notificationsService.sendNotification({

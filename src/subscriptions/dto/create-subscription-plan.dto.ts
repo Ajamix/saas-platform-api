@@ -31,4 +31,12 @@ export class CreateSubscriptionPlanDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ example: 'https://buy.stripe.com/test_5kA17K0SQ93Sf7OeUU' })
+  @IsString()
+  stripeLink?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  stripeProductId?: string;
 } 

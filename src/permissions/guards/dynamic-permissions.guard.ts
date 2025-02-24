@@ -17,7 +17,6 @@ export class DynamicPermissionsGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     
     // Get fresh user data with relations
-    console.log(request.user);
     const isSuperAdmin = request.user && request.user.isSuperAdmin; // Assuming this property exists on the user object
 
     // If the user is a superadmin, skip permission checks
@@ -65,7 +64,6 @@ export class DynamicPermissionsGuard implements CanActivate {
 
     const action = methodToAction[method];
     const requiredPermission = `${controllerPerms.resource}.${action}`;
-    console.log(user.roles[0].permissions);
     const hasPermission = user.roles[0].permissions.some(
       p => p.name === '*' || `${p.resource}.${p.action}` === requiredPermission
     );
