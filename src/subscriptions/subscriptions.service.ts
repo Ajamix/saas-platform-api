@@ -48,9 +48,7 @@ export class SubscriptionsService {
     const subscription = this.subscriptionRepository.create(createSubscriptionDto);
     const savedSubscription = await this.subscriptionRepository.save(subscription);
       // Cancel the subscription in Stripe if stripeSubscriptionId exists
-      if (subscription.stripeSubscriptionId) {
-          await this.stripeService.cancelStripeSubscription(subscription.stripeSubscriptionId);
-      }
+
 
       // Send notification to tenant admin
       const tenant = await this.tenantsService.findOne(createSubscriptionDto.tenantId);
@@ -166,7 +164,11 @@ export class SubscriptionsService {
     
     subscription.status = 'canceled';
     subscription.canceledAt = new Date();
-    
+
+    if (subscription.stripeSubscriptionId) {
+      await this.stripeService.cancelStripeSubscription(subscription.stripeSubscriptionId);
+ 
+    }
     const updatedSubscription = await this.subscriptionRepository.save(subscription);
 
     // Send notification about cancellation
