@@ -2,33 +2,34 @@ import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePermissionDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'manage_users',
-    description: 'Unique identifier for the permission'
+    description: 'Unique identifier for the permission',
   })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'Allows managing user accounts',
-    description: 'Detailed description of what this permission allows'
+    description: 'Detailed description of what this permission allows',
   })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'users',
-    description: 'The resource this permission applies to'
+    description: 'The resource this permission applies to',
   })
   @IsString()
   @IsNotEmpty()
   resource: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'create',
-    description: 'The action allowed on the resource (create, read, update, delete)'
+    description:
+      'The action allowed on the resource (create, read, update, delete)',
   })
   @IsString()
   @IsNotEmpty()

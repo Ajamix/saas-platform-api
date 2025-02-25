@@ -25,17 +25,18 @@ export class ActivityLogsService {
   }
 
   async findAll(query: QueryActivityLogDto & { tenantId?: string }) {
-    const { 
-      page = 1, 
-      limit = 10, 
+    const {
+      page = 1,
+      limit = 10,
       type,
       startDate,
       endDate,
       search,
-      tenantId 
+      tenantId,
     } = query;
 
-    const queryBuilder = this.activityLogRepository.createQueryBuilder('log')
+    const queryBuilder = this.activityLogRepository
+      .createQueryBuilder('log')
       .leftJoinAndSelect('log.user', 'user')
       .orderBy('log.createdAt', 'DESC');
 
@@ -58,7 +59,7 @@ export class ActivityLogsService {
     if (search) {
       queryBuilder.andWhere(
         '(log.action ILIKE :search OR user.email ILIKE :search)',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
 
@@ -72,18 +73,21 @@ export class ActivityLogsService {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async findByUser(userId: string, query: QueryActivityLogDto) {
     const { page = 1, limit = 10, search } = query;
-    const queryBuilder = this.activityLogRepository.createQueryBuilder('log')
+    const queryBuilder = this.activityLogRepository
+      .createQueryBuilder('log')
       .where('log.userId = :userId', { userId })
       .orderBy('log.createdAt', 'DESC');
 
     if (search) {
-      queryBuilder.andWhere('log.action ILIKE :search', { search: `%${search}%` });
+      queryBuilder.andWhere('log.action ILIKE :search', {
+        search: `%${search}%`,
+      });
     }
 
     const [logs, total] = await queryBuilder
@@ -96,18 +100,21 @@ export class ActivityLogsService {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async findByTenant(tenantId: string, query: QueryActivityLogDto) {
     const { page = 1, limit = 10, search } = query;
-    const queryBuilder = this.activityLogRepository.createQueryBuilder('log')
+    const queryBuilder = this.activityLogRepository
+      .createQueryBuilder('log')
       .where('log.tenantId = :tenantId', { tenantId })
       .orderBy('log.createdAt', 'DESC');
 
     if (search) {
-      queryBuilder.andWhere('log.action ILIKE :search', { search: `%${search}%` });
+      queryBuilder.andWhere('log.action ILIKE :search', {
+        search: `%${search}%`,
+      });
     }
 
     const [logs, total] = await queryBuilder
@@ -120,7 +127,7 @@ export class ActivityLogsService {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 

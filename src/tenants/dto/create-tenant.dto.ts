@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTenantDto {
@@ -7,29 +13,29 @@ export class CreateTenantDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ 
-    example: 'my-company', 
-    description: 'Subdomain for the tenant (must be unique)' 
+  @ApiProperty({
+    example: 'my-company',
+    description: 'Subdomain for the tenant (must be unique)',
   })
   @IsString()
   @IsNotEmpty()
   subdomain: string;
 
-  @ApiPropertyOptional({ 
-    example: true, 
-    description: 'Whether the tenant is active' 
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Whether the tenant is active',
   })
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ 
-    example: { 
+  @ApiPropertyOptional({
+    example: {
       theme: 'light',
       language: 'en',
-      features: ['chat', 'notifications']
+      features: ['chat', 'notifications'],
     },
-    description: 'Additional tenant settings'
+    description: 'Additional tenant settings',
   })
   @IsObject()
   @IsOptional()

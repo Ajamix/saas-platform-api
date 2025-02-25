@@ -1,19 +1,28 @@
-import { IsString, IsNotEmpty, IsUUID, IsEnum, IsOptional, IsDate, IsIn, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsUUID,
+  IsEnum,
+  IsOptional,
+  IsDate,
+  IsIn,
+  IsObject,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateSubscriptionDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'ID of the tenant'
+    description: 'ID of the tenant',
   })
   @IsUUID()
   @IsNotEmpty()
   tenantId: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123e4567-e89b-12d3-a456-426614174000',
-    description: 'ID of the subscription plan'
+    description: 'ID of the subscription plan',
   })
   @IsUUID()
   @IsNotEmpty()
@@ -24,72 +33,72 @@ export class CreateSubscriptionDto {
   @IsOptional()
   status?: 'active' | 'canceled' | 'expired';
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '2023-01-01T00:00:00Z',
-    description: 'Start date of the current period'
+    description: 'Start date of the current period',
   })
   @Type(() => Date)
   @IsDate()
   @IsNotEmpty()
   currentPeriodStart: Date;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '2024-01-01T00:00:00Z',
-    description: 'End date of the current period'
+    description: 'End date of the current period',
   })
   @Type(() => Date)
   @IsDate()
   @IsNotEmpty()
   currentPeriodEnd: Date;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: '2024-01-01T00:00:00Z',
-    description: 'Date when the subscription will be canceled'
+    description: 'Date when the subscription will be canceled',
   })
   @Type(() => Date)
   @IsDate()
   @IsOptional()
   cancelAt?: Date;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: '2023-06-01T00:00:00Z',
-    description: 'Date when the subscription was canceled'
+    description: 'Date when the subscription was canceled',
   })
   @Type(() => Date)
   @IsDate()
   @IsOptional()
   canceledAt?: Date;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'cus_123456789',
-    description: 'Stripe customer ID'
+    description: 'Stripe customer ID',
   })
   @IsString()
   @IsOptional()
   stripeCustomerId?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'sub_123456789',
-    description: 'Stripe subscription ID'
+    description: 'Stripe subscription ID',
   })
   @IsString()
   @IsOptional()
   stripeSubscriptionId?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'I-BW452GLLBM4XG',
-    description: 'PayPal subscription ID'
+    description: 'PayPal subscription ID',
   })
   @IsString()
   @IsOptional()
   paypalSubscriptionId?: string;
 
-  @ApiPropertyOptional({ 
-    example: { 
+  @ApiPropertyOptional({
+    example: {
       previousPlan: 'basic',
-      upgradeReason: 'needed more features'
+      upgradeReason: 'needed more features',
     },
-    description: 'Additional metadata about the subscription'
+    description: 'Additional metadata about the subscription',
   })
   @IsObject()
   @IsOptional()

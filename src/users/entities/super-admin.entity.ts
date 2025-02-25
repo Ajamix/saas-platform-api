@@ -22,4 +22,4 @@ export class SuperAdmin extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   permissions: string[];
-} 
+}

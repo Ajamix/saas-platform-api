@@ -33,4 +33,4 @@ export class PushSubscription extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
-} 
+}

@@ -8,4 +8,4 @@ import { EmailTemplatesService } from './templates/email-templates.service';
   providers: [EmailService, EmailTemplatesService],
   exports: [EmailService],
 })
-export class EmailModule {} 
+export class EmailModule {}

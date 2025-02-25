@@ -7,9 +7,11 @@ export class VerificationToken extends BaseEntity {
   @Column()
   token: string;
 
-  @ManyToOne(() => User, user => user.verificationTokens, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.verificationTokens, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   @Column({ type: 'timestamp', nullable: true })
   expiresAt: Date;
-} 
+}

@@ -18,4 +18,4 @@ export abstract class BaseEntity extends TypeORMBaseEntity {
 
   @DeleteDateColumn({ type: 'timestamptz', nullable: true })
   deletedAt?: Date;
-} 
+}

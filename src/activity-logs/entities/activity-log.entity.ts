@@ -14,7 +14,7 @@ export enum ActivityType {
   PERMISSION_CHANGE = 'PERMISSION_CHANGE',
   SETTINGS_CHANGE = 'SETTINGS_CHANGE',
   NOTIFICATION_SENT = 'NOTIFICATION_SENT',
-  OTHER = 'OTHER'
+  OTHER = 'OTHER',
 }
 
 @Entity('activity_logs')
@@ -23,7 +23,7 @@ export class ActivityLog extends BaseEntity {
     type: 'enum',
     enum: ActivityType,
     default: ActivityType.OTHER,
-    enumName: 'activity_logs_type_enum'
+    enumName: 'activity_logs_type_enum',
   })
   type: ActivityType;
 

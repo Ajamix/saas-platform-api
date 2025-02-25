@@ -63,7 +63,6 @@ export class GlobalSetting extends BaseEntity {
     sessionTimeout: number;
   };
 
-
   @Column({ default: true })
   isActive: boolean;
 

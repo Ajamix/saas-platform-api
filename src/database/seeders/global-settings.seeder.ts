@@ -69,4 +69,4 @@ export class GlobalSettingsSeeder {
       console.log('Default global settings created');
     }
   }
-} 
+}

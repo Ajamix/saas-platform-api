@@ -19,10 +19,14 @@ export class ProfilesService {
     private readonly activityLogsService: ActivityLogsService,
   ) {}
 
-  async create(createProfileDto: CreateProfileDto, user: User, request?: Request): Promise<Profile> {
+  async create(
+    createProfileDto: CreateProfileDto,
+    user: User,
+    request?: Request,
+  ): Promise<Profile> {
     // Check if profile already exists
     const existingProfile = await this.profileRepository.findOne({
-      where: { userId: user.id }
+      where: { userId: user.id },
     });
 
     if (existingProfile) {
@@ -33,7 +37,7 @@ export class ProfilesService {
     const profile = this.profileRepository.create({
       ...createProfileDto,
       userId: user.id,
-      user: user
+      user: user,
     });
 
     const savedProfile = await this.profileRepository.save(profile);
@@ -47,7 +51,7 @@ export class ProfilesService {
       'Created profile',
       ActivityType.CREATE,
       { profileId: savedProfile.id },
-      request
+      request,
     );
 
     return savedProfile;
@@ -56,7 +60,7 @@ export class ProfilesService {
   async findOne(userId: string): Promise<Profile> {
     const profile = await this.profileRepository.findOne({
       where: { userId },
-      relations: ['user']
+      relations: ['user'],
     });
 
     if (!profile) {
@@ -66,18 +70,26 @@ export class ProfilesService {
     return profile;
   }
 
-  async update(userId: string, updateProfileDto: UpdateProfileDto, user: User, request?: Request) {
+  async update(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+    user: User,
+    request?: Request,
+  ) {
     const profile = await this.findOne(userId);
 
     Object.assign(profile, updateProfileDto);
     const updatedProfile = await this.profileRepository.save(profile);
 
-
-
     return updatedProfile;
   }
 
-  async updatePreferences(userId: string, preferences: Partial<Profile['preferences']>, user: User, request?: Request) {
+  async updatePreferences(
+    userId: string,
+    preferences: Partial<Profile['preferences']>,
+    user: User,
+    request?: Request,
+  ) {
     const profile = await this.findOne(userId);
 
     profile.preferences = {
@@ -87,12 +99,15 @@ export class ProfilesService {
 
     const updatedProfile = await this.profileRepository.save(profile);
 
-
-
     return updatedProfile;
   }
 
-  async updateSocialLinks(userId: string, socialLinks: Partial<Profile['socialLinks']>, user: User, request?: Request) {
+  async updateSocialLinks(
+    userId: string,
+    socialLinks: Partial<Profile['socialLinks']>,
+    user: User,
+    request?: Request,
+  ) {
     const profile = await this.findOne(userId);
 
     profile.socialLinks = {
@@ -101,8 +116,6 @@ export class ProfilesService {
     };
 
     const updatedProfile = await this.profileRepository.save(profile);
-
-
 
     return updatedProfile;
   }

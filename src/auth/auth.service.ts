@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -29,10 +35,14 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  private async validateSuperAdmin(email: string, password: string): Promise<SuperAdmin | null> {
+  private async validateSuperAdmin(
+    email: string,
+    password: string,
+  ): Promise<SuperAdmin | null> {
     try {
-      const superAdmin = await this.superAdminService.findSuperAdminByEmail(email);
-      if (superAdmin && await bcrypt.compare(password, superAdmin.password)) {
+      const superAdmin =
+        await this.superAdminService.findSuperAdminByEmail(email);
+      if (superAdmin && (await bcrypt.compare(password, superAdmin.password))) {
         const { password, ...result } = superAdmin;
         return result as SuperAdmin;
       }
@@ -45,9 +55,16 @@ export class AuthService {
     }
   }
 
-  private async validateUser(email: string, tenantId: string, password: string): Promise<User | null> {
+  private async validateUser(
+    email: string,
+    tenantId: string,
+    password: string,
+  ): Promise<User | null> {
     try {
-      const user = await this.usersService.findByEmailAndTenant(email, tenantId);
+      const user = await this.usersService.findByEmailAndTenant(
+        email,
+        tenantId,
+      );
       if (!user || Array.isArray(user)) {
         return null;
       }
@@ -66,15 +83,18 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     // Try SuperAdmin login first
-    const superAdmin = await this.validateSuperAdmin(loginDto.email, loginDto.password);
+    const superAdmin = await this.validateSuperAdmin(
+      loginDto.email,
+      loginDto.password,
+    );
     if (superAdmin) {
-      const payload = { 
-        email: superAdmin.email, 
+      const payload = {
+        email: superAdmin.email,
         sub: superAdmin.id,
         isSuperAdmin: true,
-        hasSetupProfile: true // Super admins always have profile setup
+        hasSetupProfile: true, // Super admins always have profile setup
       };
-      
+
       return {
         user: superAdmin,
         accessToken: this.jwtService.sign(payload, {
@@ -103,31 +123,41 @@ export class AuthService {
       throw error;
     }
 
-    const user = await this.validateUser(loginDto.email, tenant.id, loginDto.password);
+    const user = await this.validateUser(
+      loginDto.email,
+      tenant.id,
+      loginDto.password,
+    );
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
     if (!user.isVerified) {
-      const resendResult = await this.usersService.resendVerificationEmail(user);
-      throw new ForbiddenException(`Please verify your email before logging in. ${resendResult.message}`);
+      const resendResult =
+        await this.usersService.resendVerificationEmail(user);
+      throw new ForbiddenException(
+        `Please verify your email before logging in. ${resendResult.message}`,
+      );
     }
     const permissions = user.roles
-    .flatMap(role => role.permissions)
-    .reduce((acc, permission) => {
-      if (!acc[permission.resource]) {
-        acc[permission.resource] = [];
-      }
-      if (!acc[permission.resource].includes(permission.action)) {
-        acc[permission.resource].push(permission.action);
-      }
-      return acc;
-    }, {} as Record<string, string[]>);
-    const payload = { 
-      email: user.email, 
+      .flatMap((role) => role.permissions)
+      .reduce(
+        (acc, permission) => {
+          if (!acc[permission.resource]) {
+            acc[permission.resource] = [];
+          }
+          if (!acc[permission.resource].includes(permission.action)) {
+            acc[permission.resource].push(permission.action);
+          }
+          return acc;
+        },
+        {} as Record<string, string[]>,
+      );
+    const payload = {
+      email: user.email,
       sub: user.id,
       tenantId: tenant.id,
       hasSetupProfile: user.hasSetupProfile,
-      permissions
+      permissions,
     };
 
     return {
@@ -150,49 +180,61 @@ export class AuthService {
     await queryRunner.startTransaction();
 
     try {
-      const allowUserRegistration = await this.tenantsService.getAllowUserRegistration();
+      const allowUserRegistration =
+        await this.tenantsService.getAllowUserRegistration();
 
       if (!allowUserRegistration) {
-        throw new ForbiddenException('User registration is currently disabled.');
+        throw new ForbiddenException(
+          'User registration is currently disabled.',
+        );
       }
 
       // Check if tenant exists (use regular repository for this check)
-      const existingTenant = await this.tenantsService.findBySubdomain(
-        registerDto.tenant.subdomain
-      ).catch(() => null);
+      const existingTenant = await this.tenantsService
+        .findBySubdomain(registerDto.tenant.subdomain)
+        .catch(() => null);
 
       if (existingTenant) {
         throw new ConflictException('Subdomain already taken');
       }
 
       // Create tenant using queryRunner
-      const tenant = await this.tenantsService.create({
-        name: registerDto.tenant.tenantName,
-        subdomain: registerDto.tenant.subdomain,
-        isActive: true,
-      }, queryRunner);
+      const tenant = await this.tenantsService.create(
+        {
+          name: registerDto.tenant.tenantName,
+          subdomain: registerDto.tenant.subdomain,
+          isActive: true,
+        },
+        queryRunner,
+      );
 
       // Create user using queryRunner
-      const user = await this.usersService.create({
-        email: registerDto.email,
-        password: registerDto.password,
-        firstName: registerDto.firstName,
-        lastName: registerDto.lastName,
-        isActive: true,
-        tenantId: tenant.id,
-      }, queryRunner);
+      const user = await this.usersService.create(
+        {
+          email: registerDto.email,
+          password: registerDto.password,
+          firstName: registerDto.firstName,
+          lastName: registerDto.lastName,
+          isActive: true,
+          tenantId: tenant.id,
+        },
+        queryRunner,
+      );
 
       // Create and assign admin role using queryRunner
-      const adminRole = await this.tenantsService.createTenantAdminRole(tenant, queryRunner);
+      const adminRole = await this.tenantsService.createTenantAdminRole(
+        tenant,
+        queryRunner,
+      );
       await this.tenantsService.assignAdminRole(user, adminRole, queryRunner);
 
       await queryRunner.commitTransaction();
 
-      const payload = { 
-        email: user.email, 
+      const payload = {
+        email: user.email,
         sub: user.id,
         tenantId: tenant.id,
-        hasSetupProfile: false
+        hasSetupProfile: false,
       };
 
       return {
@@ -221,43 +263,51 @@ export class AuthService {
       let payload;
       if (decoded.isSuperAdmin) {
         // Handle super admin refresh
-        const superAdmin = await this.superAdminService.findSuperAdminByEmail(decoded.email);
+        const superAdmin = await this.superAdminService.findSuperAdminByEmail(
+          decoded.email,
+        );
         if (!superAdmin) {
           throw new UnauthorizedException('Invalid refresh token');
         }
 
-        payload = { 
-          email: superAdmin.email, 
+        payload = {
+          email: superAdmin.email,
           sub: superAdmin.id,
           isSuperAdmin: true,
-          hasSetupProfile: true // Super admins always have profile setup
+          hasSetupProfile: true, // Super admins always have profile setup
         };
       } else {
         // Handle tenant user refresh
         const tenant = await this.tenantsService.findOne(decoded.tenantId);
-        const user = await this.usersService.findByEmailAndTenant(decoded.email, tenant.id);
+        const user = await this.usersService.findByEmailAndTenant(
+          decoded.email,
+          tenant.id,
+        );
         if (!user || Array.isArray(user)) {
           throw new UnauthorizedException('Invalid refresh token');
         }
 
         const permissions = user.roles
-          .flatMap(role => role.permissions)
-          .reduce((acc, permission) => {
-            if (!acc[permission.resource]) {
-              acc[permission.resource] = [];
-            }
-            if (!acc[permission.resource].includes(permission.action)) {
-              acc[permission.resource].push(permission.action);
-            }
-            return acc;
-          }, {} as Record<string, string[]>);
+          .flatMap((role) => role.permissions)
+          .reduce(
+            (acc, permission) => {
+              if (!acc[permission.resource]) {
+                acc[permission.resource] = [];
+              }
+              if (!acc[permission.resource].includes(permission.action)) {
+                acc[permission.resource].push(permission.action);
+              }
+              return acc;
+            },
+            {} as Record<string, string[]>,
+          );
 
-        payload = { 
-          email: user.email, 
+        payload = {
+          email: user.email,
           sub: user.id,
           tenantId: tenant.id,
           hasSetupProfile: user.hasSetupProfile,
-          permissions
+          permissions,
         };
       }
 
@@ -295,7 +345,9 @@ export class AuthService {
     return { message: 'Email verified successfully' };
   }
 
-  async resendVerificationEmail(user: User): Promise<{ message: string, waitTime?: number }> {
+  async resendVerificationEmail(
+    user: User,
+  ): Promise<{ message: string; waitTime?: number }> {
     return this.usersService.resendVerificationEmail(user);
   }
 }

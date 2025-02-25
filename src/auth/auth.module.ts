@@ -26,17 +26,22 @@ import { getRepositoryToken } from '@nestjs/typeorm';
     TypeOrmModule.forFeature([User, Tenant, GlobalSetting, VerificationToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule, TypeOrmModule.forFeature([GlobalSetting])],
-      useFactory: async (configService: ConfigService, globalSettingRepository: Repository<GlobalSetting>) => {
+      useFactory: async (
+        configService: ConfigService,
+        globalSettingRepository: Repository<GlobalSetting>,
+      ) => {
         const globalSetting = await globalSettingRepository.findOne({
           where: { isActive: true },
           select: ['systemSettings'],
         });
 
-        let sessionTimeoutValue: string | number | undefined = globalSetting?.systemSettings?.sessionTimeout;
+        let sessionTimeoutValue: string | number | undefined =
+          globalSetting?.systemSettings?.sessionTimeout;
 
         // If value is missing, fallback to default from config
         if (sessionTimeoutValue === undefined || sessionTimeoutValue === null) {
-          sessionTimeoutValue = configService.get<string | number>('JWT_EXPIRATION') || '15m';
+          sessionTimeoutValue =
+            configService.get<string | number>('JWT_EXPIRATION') || '15m';
         }
 
         let sessionTimeout: string | number;

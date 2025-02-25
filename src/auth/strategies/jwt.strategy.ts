@@ -19,9 +19,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; isSuperAdmin: boolean; tenantId?: string }) {
+  async validate(payload: {
+    sub: string;
+    email: string;
+    isSuperAdmin: boolean;
+    tenantId?: string;
+  }) {
     if (payload.isSuperAdmin) {
-      const superAdmin = await this.superAdminService.findSuperAdminByEmail(payload.email);
+      const superAdmin = await this.superAdminService.findSuperAdminByEmail(
+        payload.email,
+      );
       if (!superAdmin) {
         throw new UnauthorizedException();
       }
@@ -31,10 +38,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!payload.tenantId) {
       throw new UnauthorizedException();
     }
-    const user = await this.usersService.findByEmailAndTenant(payload.email, payload.tenantId);
+    const user = await this.usersService.findByEmailAndTenant(
+      payload.email,
+      payload.tenantId,
+    );
     if (!user || (Array.isArray(user) ? false : !user.isActive)) {
       throw new UnauthorizedException();
     }
     return { ...(Array.isArray(user) ? user[0] : user), isSuperAdmin: false };
   }
-} 
+}

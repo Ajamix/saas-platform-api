@@ -7,4 +7,4 @@ import { SettingsModule } from '../settings/settings.module';
   providers: [PaymentService],
   exports: [PaymentService],
 })
-export class PaymentModule {} 
+export class PaymentModule {}

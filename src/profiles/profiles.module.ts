@@ -7,10 +7,7 @@ import { User } from '../users/entities/user.entity';
 import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Profile, User]),
-    ActivityLogsModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Profile, User]), ActivityLogsModule],
   controllers: [ProfilesController],
   providers: [ProfilesService],
   exports: [ProfilesService],

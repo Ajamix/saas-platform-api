@@ -1,10 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { SuperAdminService } from './super-admin.service';
 import { CreateSubscriptionPlanDto } from '../subscriptions/dto/create-subscription-plan.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from './guards/super-admin.guard';
 import { CreateSuperAdminDto } from './dto/create-super-admin.dto';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { User } from '../users/entities/user.entity';
 import { AuthUser } from '../auth/decorators/auth-user.decorator';
 
@@ -20,27 +35,27 @@ export class SuperAdminController {
   @ApiBody({
     schema: {
       example: {
-        email: "superadmin@system.com",
-        password: "superSecurePass123!",
-        firstName: "Super",
-        lastName: "Admin",
-        permissions: ["all", "manage_tenants", "manage_subscriptions"]
-      }
-    }
+        email: 'superadmin@system.com',
+        password: 'superSecurePass123!',
+        firstName: 'Super',
+        lastName: 'Admin',
+        permissions: ['all', 'manage_tenants', 'manage_subscriptions'],
+      },
+    },
   })
   @ApiResponse({
     status: 201,
     description: 'Super admin created successfully',
     schema: {
       example: {
-        id: "123e4567-e89b-12d3-a456-426614174000",
-        email: "superadmin@system.com",
-        firstName: "Super",
-        lastName: "Admin",
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        email: 'superadmin@system.com',
+        firstName: 'Super',
+        lastName: 'Admin',
         isActive: true,
-        permissions: ["all", "manage_tenants", "manage_subscriptions"]
-      }
-    }
+        permissions: ['all', 'manage_tenants', 'manage_subscriptions'],
+      },
+    },
   })
   async createSuperAdmin(@Body() createSuperAdminDto: CreateSuperAdminDto) {
     return this.superAdminService.createSuperAdmin(createSuperAdminDto);
@@ -54,26 +69,30 @@ export class SuperAdminController {
   @ApiBody({
     schema: {
       example: {
-        name: "Professional Plan",
-        description: "Perfect for growing businesses",
+        name: 'Professional Plan',
+        description: 'Perfect for growing businesses',
         price: 29.99,
-        interval: "monthly",
+        interval: 'monthly',
         features: [
-          "Up to 10 users",
-          "24/7 support",
-          "Custom domain",
-          "API access"
+          'Up to 10 users',
+          '24/7 support',
+          'Custom domain',
+          'API access',
         ],
-        isActive: true
-      }
-    }
+        isActive: true,
+      },
+    },
   })
   @ApiResponse({
     status: 201,
-    description: 'Subscription plan created successfully'
+    description: 'Subscription plan created successfully',
   })
-  async createSubscriptionPlan(@Body() createSubscriptionPlanDto: CreateSubscriptionPlanDto) {
-    return this.superAdminService.createSubscriptionPlan(createSubscriptionPlanDto);
+  async createSubscriptionPlan(
+    @Body() createSubscriptionPlanDto: CreateSubscriptionPlanDto,
+  ) {
+    return this.superAdminService.createSubscriptionPlan(
+      createSubscriptionPlanDto,
+    );
   }
   @Get('subscription-plans/admin')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
@@ -96,7 +115,7 @@ export class SuperAdminController {
   async getAllSubscriptionPlans() {
     const plans = await this.superAdminService.getAllSubscriptionPlans();
     return plans
-      .filter(plan => plan.isActive)
+      .filter((plan) => plan.isActive)
       .map(({ createdAt, updatedAt, ...publicData }) => publicData);
   }
 
@@ -110,7 +129,6 @@ export class SuperAdminController {
     const { createdAt, updatedAt, ...publicData } = plan;
     return publicData;
   }
-
 
   @Patch('subscription-plans/:id')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
@@ -128,4 +146,4 @@ export class SuperAdminController {
   async deleteSubscriptionPlan(@Param('id') id: string) {
     return this.superAdminService.deleteSubscriptionPlan(id);
   }
-} 
+}

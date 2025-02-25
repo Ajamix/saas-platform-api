@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,13 +14,13 @@ export class DynamicPermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     @InjectRepository(User)
-    private userRepository: Repository<User>
+    private userRepository: Repository<User>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const controller = context.getClass();
     const request = context.switchToHttp().getRequest();
-    
+
     // Get fresh user data with relations
     const isSuperAdmin = request.user && request.user.isSuperAdmin; // Assuming this property exists on the user object
 
@@ -25,8 +30,8 @@ export class DynamicPermissionsGuard implements CanActivate {
       where: { id: request.user.id },
       relations: {
         roles: {
-          permissions: true
-        }
+          permissions: true,
+        },
       },
       select: {
         id: true,
@@ -35,10 +40,10 @@ export class DynamicPermissionsGuard implements CanActivate {
           permissions: {
             id: true,
             resource: true,
-            action: true
-          }
-        }
-      }
+            action: true,
+          },
+        },
+      },
     });
 
     if (!user?.roles?.[0]?.permissions) {
@@ -48,7 +53,7 @@ export class DynamicPermissionsGuard implements CanActivate {
     // Rest of the permission checking logic...
     const controllerPerms = this.reflector.get<{ resource: string }>(
       'controllerPermissions',
-      controller
+      controller,
     );
 
     if (!controllerPerms) return true;
@@ -59,13 +64,14 @@ export class DynamicPermissionsGuard implements CanActivate {
       POST: 'create',
       PATCH: 'update',
       PUT: 'update',
-      DELETE: 'delete'
+      DELETE: 'delete',
     };
 
     const action = methodToAction[method];
     const requiredPermission = `${controllerPerms.resource}.${action}`;
     const hasPermission = user.roles[0].permissions.some(
-      p => p.name === '*' || `${p.resource}.${p.action}` === requiredPermission
+      (p) =>
+        p.name === '*' || `${p.resource}.${p.action}` === requiredPermission,
     );
 
     if (!hasPermission) {
@@ -74,4 +80,4 @@ export class DynamicPermissionsGuard implements CanActivate {
 
     return true;
   }
-} 
+}

@@ -1,4 +1,11 @@
-import { IsOptional, IsEnum, IsDateString, IsString, IsNumber, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsDateString,
+  IsString,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ActivityType } from '../entities/activity-log.entity';
@@ -37,4 +44,4 @@ export class QueryActivityLogDto {
   @Min(1)
   @IsOptional()
   limit?: number = 10;
-} 
+}

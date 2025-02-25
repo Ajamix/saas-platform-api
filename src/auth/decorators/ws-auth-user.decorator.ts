@@ -6,4 +6,4 @@ export const WsAuthUser = createParamDecorator(
     const client: Socket = ctx.switchToWs().getClient();
     return client.handshake.auth.user;
   },
-); 
+);

@@ -35,16 +35,27 @@ export class TenantsService {
     private readonly globalSettingRepository: Repository<GlobalSetting>,
   ) {}
 
-  async createTenantAdminRole(tenant: Tenant, queryRunner?: QueryRunner): Promise<Role> {
-    const repo = queryRunner ? queryRunner.manager.getRepository(Role) : this.roleRepository;
-    const permRepo = queryRunner ? queryRunner.manager.getRepository(Permission) : this.permissionRepository;
+  async createTenantAdminRole(
+    tenant: Tenant,
+    queryRunner?: QueryRunner,
+  ): Promise<Role> {
+    const repo = queryRunner
+      ? queryRunner.manager.getRepository(Role)
+      : this.roleRepository;
+    const permRepo = queryRunner
+      ? queryRunner.manager.getRepository(Permission)
+      : this.permissionRepository;
 
     // Get all available permissions
     const allPermissions = await permRepo.find();
 
     // Retrieve the defaultUserRole from GlobalSetting
-    const globalSetting = await this.globalSettingRepository.findOne({ where: { isActive: true }, select: ['systemSettings'] });
-    const defaultUserRole = globalSetting?.systemSettings?.defaultUserRole || 'Admin';
+    const globalSetting = await this.globalSettingRepository.findOne({
+      where: { isActive: true },
+      select: ['systemSettings'],
+    });
+    const defaultUserRole =
+      globalSetting?.systemSettings?.defaultUserRole || 'Admin';
 
     // Create admin role using defaultUserRole
     const adminRole = repo.create({
@@ -59,84 +70,98 @@ export class TenantsService {
 
     // Then set the many-to-many relationships
     savedRole.permissions = allPermissions;
-    
+
     // Save again with permissions
     return await repo.save(savedRole);
   }
 
-  async assignAdminRole(user: User, role: Role, queryRunner?: QueryRunner): Promise<User> {
-    const repo = queryRunner ? queryRunner.manager.getRepository(User) : this.userRepository;
+  async assignAdminRole(
+    user: User,
+    role: Role,
+    queryRunner?: QueryRunner,
+  ): Promise<User> {
+    const repo = queryRunner
+      ? queryRunner.manager.getRepository(User)
+      : this.userRepository;
 
     // Get existing user with roles
     const existingUser = await repo.findOne({
       where: { id: user.id },
       relations: ['roles'],
     });
-  
+
     if (!existingUser) {
       throw new Error(`User with ID ${user.id} not found`);
     }
-  
+
     existingUser.roles = existingUser.roles || [];
     if (!existingUser.roles.some((r) => r.id === role.id)) {
       existingUser.roles.push(role);
     }
-  
+
     return await repo.save(existingUser);
   }
-  
 
-  async create(createTenantDto: CreateTenantDto, queryRunner?: QueryRunner): Promise<Tenant> {
-    const repo = queryRunner ? queryRunner.manager.getRepository(Tenant) : this.tenantRepository;
-    
+  async create(
+    createTenantDto: CreateTenantDto,
+    queryRunner?: QueryRunner,
+  ): Promise<Tenant> {
+    const repo = queryRunner
+      ? queryRunner.manager.getRepository(Tenant)
+      : this.tenantRepository;
+
     const tenant = repo.create(createTenantDto);
     return await repo.save(tenant);
   }
 
-  async findAll(page: number = 1, limit: number = 10, search?: string): Promise<{ 
-    data: TenantWithUserCount[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+  ): Promise<{
+    data: TenantWithUserCount[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   }> {
     const skip = (page - 1) * limit;
-  
+
     // Build where condition for search
     const whereCondition: FindOptionsWhere<Tenant> = {};
     if (search) {
       whereCondition.name = Like(`%${search}%`);
     }
-  
+
     // Get total count
     const total = await this.tenantRepository.count({
       where: whereCondition,
     });
-  
+
     // Calculate total pages
     const totalPages = Math.ceil(total / limit);
-  
+
     // Fetch paginated data
     const data = await this.tenantRepository
-      .createQueryBuilder("tenant")
-      .leftJoin("tenant.users", "user") // ✅ We do NOT select user.id anymore
+      .createQueryBuilder('tenant')
+      .leftJoin('tenant.users', 'user') // ✅ We do NOT select user.id anymore
       .select([
-        "tenant.id",
-        "tenant.name",
-        "tenant.subdomain",
-        "tenant.isActive",
-        "tenant.createdAt",
-        "tenant.updatedAt"
+        'tenant.id',
+        'tenant.name',
+        'tenant.subdomain',
+        'tenant.isActive',
+        'tenant.createdAt',
+        'tenant.updatedAt',
       ])
-      .addSelect("COUNT(user.id)", "totalUsers") // ✅ Get total users directly from the DB
-      .groupBy("tenant.id") // ✅ Group by tenant ID to aggregate correctly
+      .addSelect('COUNT(user.id)', 'totalUsers') // ✅ Get total users directly from the DB
+      .groupBy('tenant.id') // ✅ Group by tenant ID to aggregate correctly
       .skip(skip)
       .take(limit)
-      .orderBy("tenant.createdAt", "DESC")
+      .orderBy('tenant.createdAt', 'DESC')
       .getRawMany(); // ✅ Fetch as raw data to include the count
-  
+
     return {
-      data: data.map(tenant => ({
+      data: data.map((tenant) => ({
         id: tenant.tenant_id,
         name: tenant.tenant_name,
         subdomain: tenant.tenant_subdomain,
@@ -151,7 +176,6 @@ export class TenantsService {
       totalPages,
     };
   }
-  
 
   async findOne(id: string): Promise<Tenant> {
     const tenant = await this.tenantRepository.findOne({
@@ -173,13 +197,20 @@ export class TenantsService {
     });
 
     if (!tenant) {
-      throw new NotFoundException(`Tenant with subdomain "${subdomain}" not found`);
+      throw new NotFoundException(
+        `Tenant with subdomain "${subdomain}" not found`,
+      );
     }
 
     return tenant;
   }
 
-  async update(id: string, updateTenantDto: UpdateTenantDto, user: User, request?: Request): Promise<Tenant> {
+  async update(
+    id: string,
+    updateTenantDto: UpdateTenantDto,
+    user: User,
+    request?: Request,
+  ): Promise<Tenant> {
     const tenant = await this.findOne(id);
     const previousValues = { ...tenant };
     Object.assign(tenant, updateTenantDto);
@@ -187,23 +218,23 @@ export class TenantsService {
 
     // Log the activity
 
-
     return updatedTenant;
   }
 
   async remove(id: string, user: User, request?: Request): Promise<void> {
     const tenant = await this.findOne(id);
-    const result = await this.tenantRepository.delete(id);
-    
+    const result = await this.tenantRepository.softDelete(id);
+
     if (result.affected === 0) {
       throw new NotFoundException(`Tenant with ID "${id}" not found`);
     }
-
-
   }
 
   async getAllowUserRegistration(): Promise<boolean> {
-    const globalSetting = await this.globalSettingRepository.findOne({ where: { isActive: true }, select: ['systemSettings'] });
+    const globalSetting = await this.globalSettingRepository.findOne({
+      where: { isActive: true },
+      select: ['systemSettings'],
+    });
     return globalSetting?.systemSettings?.allowUserRegistration ?? false;
   }
 }

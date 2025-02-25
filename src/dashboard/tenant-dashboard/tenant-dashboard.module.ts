@@ -11,16 +11,11 @@ import { GlobalSettingsModule } from '../../settings/global-settings/global-sett
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Tenant,
-      Subscription,
-      Role
-    ]),
+    TypeOrmModule.forFeature([User, Tenant, Subscription, Role]),
     TenantsModule,
     GlobalSettingsModule,
   ],
   controllers: [TenantDashboardController],
-  providers: [TenantDashboardService]
+  providers: [TenantDashboardService],
 })
 export class TenantDashboardModule {}

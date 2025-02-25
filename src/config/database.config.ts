@@ -8,4 +8,4 @@ export default registerAs('database', () => ({
   database: process.env.DB_DATABASE || 'saas_platform',
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV !== 'production',
-})); 
+}));

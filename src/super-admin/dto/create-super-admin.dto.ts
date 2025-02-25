@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsEmail, IsOptional, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  IsArray,
+} from 'class-validator';
 
 export class CreateSuperAdminDto {
   @IsEmail()
@@ -20,4 +26,4 @@ export class CreateSuperAdminDto {
   @IsArray()
   @IsOptional()
   permissions?: string[];
-} 
+}

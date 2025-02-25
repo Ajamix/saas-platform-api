@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SuperAdminService } from '../super-admin.service';
 
 @Injectable()
@@ -13,11 +18,15 @@ export class SuperAdminGuard implements CanActivate {
       throw new UnauthorizedException('User not found');
     }
 
-    const superAdmin = await this.superAdminService.findSuperAdminByEmail(user.email);
+    const superAdmin = await this.superAdminService.findSuperAdminByEmail(
+      user.email,
+    );
     if (!superAdmin) {
-      throw new UnauthorizedException('Access denied - Super Admin privileges required');
+      throw new UnauthorizedException(
+        'Access denied - Super Admin privileges required',
+      );
     }
 
     return true;
   }
-} 
+}

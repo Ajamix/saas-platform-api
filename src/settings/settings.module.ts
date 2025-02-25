@@ -9,4 +9,4 @@ import { DatabaseSeederModule } from '../database/seeders/database-seeder.module
   providers: [SettingsProvider],
   exports: [SettingsProvider, GlobalSettingsModule, TenantSettingsModule],
 })
-export class SettingsModule {} 
+export class SettingsModule {}

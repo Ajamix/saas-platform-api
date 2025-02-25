@@ -60,4 +60,4 @@ export class Notification extends BaseEntity {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
-} 
+}

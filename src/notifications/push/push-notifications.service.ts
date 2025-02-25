@@ -16,7 +16,7 @@ export class PushNotificationsService implements OnModuleInit {
   async onModuleInit() {
     // Temporarily skip web-push initialization
     return;
-    
+
     // We'll enable this later when we have VAPID keys
     /*const settings = await this.settingsProvider.getEffectiveSettings();
     if (settings.notifications.enablePushNotifications) {
@@ -28,7 +28,11 @@ export class PushNotificationsService implements OnModuleInit {
     }*/
   }
 
-  async saveSubscription(subscription: PushSubscriptionJSON, userId: string, tenantId?: string) {
+  async saveSubscription(
+    subscription: PushSubscriptionJSON,
+    userId: string,
+    tenantId?: string,
+  ) {
     const existingSubscription = await this.subscriptionRepository.findOne({
       where: {
         endpoint: subscription.endpoint,
@@ -51,7 +55,7 @@ export class PushNotificationsService implements OnModuleInit {
   }
 
   async removeSubscription(endpoint: string, userId: string) {
-    await this.subscriptionRepository.delete({
+    await this.subscriptionRepository.softDelete({
       endpoint,
       userId,
     });
@@ -105,4 +109,4 @@ export class PushNotificationsService implements OnModuleInit {
 
     await Promise.all(sendPromises);
   }
-} 
+}

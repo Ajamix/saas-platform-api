@@ -25,7 +25,7 @@ export class NotificationsSse {
       type: 'notification',
       data: notification,
       timestamp: new Date(),
-      event: 'notification'
+      event: 'notification',
     });
     this.logger.debug(`Notification sent to user ${userId}:`, notification);
   }
@@ -44,7 +44,7 @@ export class NotificationsSse {
       subject.next({
         type: 'broadcast',
         data: notification,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     }
   }
@@ -53,4 +53,4 @@ export class NotificationsSse {
   subscribeToUser(userId: string): Subject<any> {
     return this.getSubjectForUser(userId);
   }
-} 
+}

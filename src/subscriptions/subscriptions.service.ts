@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan, IsNull, In, Not, MoreThan } from 'typeorm';
 import { Subscription } from './entities/subscription.entity';
@@ -19,11 +23,13 @@ export class SubscriptionsService {
     private readonly subscriptionPlanRepository: Repository<SubscriptionPlan>,
     private readonly notificationsService: NotificationsService,
     private readonly usersService: UsersService,
-    private readonly tenantsService: TenantsService,  
+    private readonly tenantsService: TenantsService,
     private readonly stripeService: StripeService,
   ) {}
 
-  async create(createSubscriptionDto: CreateSubscriptionDto): Promise<Subscription> {
+  async create(
+    createSubscriptionDto: CreateSubscriptionDto,
+  ): Promise<Subscription> {
     // Check if tenant already has an active subscription
     const existingSubscription = await this.subscriptionRepository.findOne({
       where: {
@@ -45,15 +51,22 @@ export class SubscriptionsService {
       throw new NotFoundException('Subscription plan not found');
     }
 
-    const subscription = this.subscriptionRepository.create(createSubscriptionDto);
-    const savedSubscription = await this.subscriptionRepository.save(subscription);
-      // Cancel the subscription in Stripe if stripeSubscriptionId exists
+    const subscription = this.subscriptionRepository.create(
+      createSubscriptionDto,
+    );
+    const savedSubscription =
+      await this.subscriptionRepository.save(subscription);
+    // Cancel the subscription in Stripe if stripeSubscriptionId exists
 
-
-      // Send notification to tenant admin
-      const tenant = await this.tenantsService.findOne(createSubscriptionDto.tenantId);
-      const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
-      const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
+    // Send notification to tenant admin
+    const tenant = await this.tenantsService.findOne(
+      createSubscriptionDto.tenantId,
+    );
+    const adminUsers = await this.usersService.findByEmailAndTenant(
+      null,
+      tenant.id,
+    );
+    const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
 
     for (const admin of admins) {
       await this.notificationsService.sendNotification({
@@ -80,8 +93,12 @@ export class SubscriptionsService {
     return savedSubscription;
   }
 
-  async findAll(page: number = 1, limit: number = 10): Promise<{ data: Partial<Subscription>[], total: number }> {
-    const [result, total] = await this.subscriptionRepository.createQueryBuilder('subscription')
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<{ data: Partial<Subscription>[]; total: number }> {
+    const [result, total] = await this.subscriptionRepository
+      .createQueryBuilder('subscription')
       .leftJoin('subscription.tenant', 'tenant')
       .leftJoin('subscription.plan', 'plan')
       .select([
@@ -126,7 +143,10 @@ export class SubscriptionsService {
     });
   }
 
-  async update(id: string, updateSubscriptionDto: UpdateSubscriptionDto): Promise<Subscription> {
+  async update(
+    id: string,
+    updateSubscriptionDto: UpdateSubscriptionDto,
+  ): Promise<Subscription> {
     const subscription = await this.findOne(id);
     const oldPlan = await this.subscriptionPlanRepository.findOne({
       where: { id: subscription.planId },
@@ -137,9 +157,13 @@ export class SubscriptionsService {
     }
 
     Object.assign(subscription, updateSubscriptionDto);
-    const updatedSubscription = await this.subscriptionRepository.save(subscription);
+    const updatedSubscription =
+      await this.subscriptionRepository.save(subscription);
 
-    if (updateSubscriptionDto.planId && updateSubscriptionDto.planId !== oldPlan.id) {
+    if (
+      updateSubscriptionDto.planId &&
+      updateSubscriptionDto.planId !== oldPlan.id
+    ) {
       const newPlan = await this.subscriptionPlanRepository.findOne({
         where: { id: updateSubscriptionDto.planId },
       });
@@ -150,7 +174,10 @@ export class SubscriptionsService {
 
       // Send notification about plan change
       const tenant = await this.tenantsService.findOne(subscription.tenantId);
-      const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
+      const adminUsers = await this.usersService.findByEmailAndTenant(
+        null,
+        tenant.id,
+      );
       const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
 
       for (const admin of admins) {
@@ -181,7 +208,7 @@ export class SubscriptionsService {
   // async extendActiveSubscriptions(): Promise<void> {
   //   const now = new Date();
   //   const upcomingExpirationDate = new Date(now);
-  //   upcomingExpirationDate.setDate(now.getDate() + 1); 
+  //   upcomingExpirationDate.setDate(now.getDate() + 1);
 
   //   const subscriptions = await this.subscriptionRepository.find({
   //     where: {
@@ -212,24 +239,29 @@ export class SubscriptionsService {
   // }
   async cancel(id: string): Promise<Subscription> {
     const subscription = await this.findOne(id);
-    
+
     subscription.status = 'canceled';
     subscription.canceledAt = new Date();
     subscription.cancelAt = subscription.currentPeriodEnd;
-    try{
+    try {
       if (subscription.stripeSubscriptionId) {
-        await this.stripeService.cancelStripeSubscription(subscription.stripeSubscriptionId);
-   
+        await this.stripeService.cancelStripeSubscription(
+          subscription.stripeSubscriptionId,
+        );
       }
-    }catch(error){
+    } catch (error) {
       console.log(error);
     }
 
-    const updatedSubscription = await this.subscriptionRepository.save(subscription);
+    const updatedSubscription =
+      await this.subscriptionRepository.save(subscription);
 
     // Send notification about cancellation
     const tenant = await this.tenantsService.findOne(subscription.tenantId);
-    const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
+    const adminUsers = await this.usersService.findByEmailAndTenant(
+      null,
+      tenant.id,
+    );
     const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
 
     for (const admin of admins) {
@@ -248,7 +280,7 @@ export class SubscriptionsService {
         tenantId: tenant.id,
       });
     }
-    
+
     return updatedSubscription;
   }
 
@@ -264,7 +296,10 @@ export class SubscriptionsService {
     for (const subscription of expiredSubscriptions) {
       try {
         // Verify the subscription status with Stripe
-        const stripeSubscription = await this.stripeService.getStripeSubscription(String(subscription.stripeSubscriptionId));
+        const stripeSubscription =
+          await this.stripeService.getStripeSubscription(
+            String(subscription.stripeSubscriptionId),
+          );
 
         if (stripeSubscription.status === 'canceled') {
           // Mark the subscription as expired if it has been canceled in Stripe
@@ -272,8 +307,13 @@ export class SubscriptionsService {
           await this.subscriptionRepository.save(subscription);
 
           // Send notification about expiration
-          const tenant = await this.tenantsService.findOne(subscription.tenantId);
-          const adminUsers = await this.usersService.findByEmailAndTenant(null, tenant.id);
+          const tenant = await this.tenantsService.findOne(
+            subscription.tenantId,
+          );
+          const adminUsers = await this.usersService.findByEmailAndTenant(
+            null,
+            tenant.id,
+          );
           const admins = Array.isArray(adminUsers) ? adminUsers : [adminUsers];
 
           for (const admin of admins) {
@@ -294,18 +334,28 @@ export class SubscriptionsService {
         } else if (stripeSubscription.status === 'active') {
           // Extend the currentPeriodEnd based on the interval
           if (subscription.plan.interval === 'monthly') {
-            subscription.currentPeriodEnd = new Date(subscription.currentPeriodEnd.setMonth(subscription.currentPeriodEnd.getMonth() + 1));
+            subscription.currentPeriodEnd = new Date(
+              subscription.currentPeriodEnd.setMonth(
+                subscription.currentPeriodEnd.getMonth() + 1,
+              ),
+            );
           } else if (subscription.plan.interval === 'yearly') {
-            subscription.currentPeriodEnd = new Date(subscription.currentPeriodEnd.setFullYear(subscription.currentPeriodEnd.getFullYear() + 1));
+            subscription.currentPeriodEnd = new Date(
+              subscription.currentPeriodEnd.setFullYear(
+                subscription.currentPeriodEnd.getFullYear() + 1,
+              ),
+            );
           }
           await this.subscriptionRepository.save(subscription);
         }
       } catch (error) {
-        console.error(`Failed to verify subscription ${subscription.id} with Stripe:`, error);
+        console.error(
+          `Failed to verify subscription ${subscription.id} with Stripe:`,
+          error,
+        );
       }
     }
   }
-
 
   async getActiveSubscription(tenantId: string): Promise<Subscription | null> {
     const subscription = await this.subscriptionRepository.findOne({
@@ -313,18 +363,17 @@ export class SubscriptionsService {
         {
           tenantId,
           status: 'active',
-          cancelAt: IsNull(), 
+          cancelAt: IsNull(),
         },
         {
           tenantId,
           status: Not('active'),
-          cancelAt: MoreThan(new Date()), 
+          cancelAt: MoreThan(new Date()),
         },
       ],
       relations: ['plan'],
     });
-  
+
     return subscription;
   }
-  
 }

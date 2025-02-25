@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Role } from './entities/role.entity';
@@ -19,14 +23,14 @@ export class RolesService {
     let permissions: Permission[] = [];
     if (createRoleDto.permissionIds) {
       permissions = await this.permissionRepository.findBy({
-        id: In(createRoleDto.permissionIds)
+        id: In(createRoleDto.permissionIds),
       });
     }
 
     const role = this.roleRepository.create({
       ...createRoleDto,
       tenantId,
-      permissions
+      permissions,
     });
 
     return await this.roleRepository.save(role);
@@ -35,14 +39,14 @@ export class RolesService {
   async findAll(tenantId: string): Promise<Role[]> {
     return this.roleRepository.find({
       where: { tenantId },
-      relations: ['permissions']
+      relations: ['permissions'],
     });
   }
 
   async findOne(id: string, tenantId: string): Promise<Role> {
     const role = await this.roleRepository.findOne({
       where: { id, tenantId },
-      relations: ['permissions']
+      relations: ['permissions'],
     });
 
     if (!role) {
@@ -52,7 +56,11 @@ export class RolesService {
     return role;
   }
 
-  async update(id: string, updateRoleDto: UpdateRoleDto, tenantId: string): Promise<Role> {
+  async update(
+    id: string,
+    updateRoleDto: UpdateRoleDto,
+    tenantId: string,
+  ): Promise<Role> {
     const role = await this.findOne(id, tenantId);
 
     // Prevent modifying default roles
@@ -63,7 +71,7 @@ export class RolesService {
     // Update permissions if provided
     if (updateRoleDto.permissionIds) {
       role.permissions = await this.permissionRepository.findBy({
-        id: In(updateRoleDto.permissionIds)
+        id: In(updateRoleDto.permissionIds),
       });
     }
 

@@ -33,10 +33,10 @@ export class SettingsProvider implements OnModuleInit {
       // Always seed permissions and superadmin
       this.logger.log('Seeding permissions...');
       await this.permissionSeeder.seed();
-      
+
       this.logger.log('Seeding superadmin...');
       await this.superAdminSeeder.seed();
-      
+
       this.hasSeededCore = true;
     } catch (error) {
       this.logger.error('Error seeding core data:', error.message);
@@ -64,7 +64,9 @@ export class SettingsProvider implements OnModuleInit {
     try {
       return await this.globalSettingsService.findActive();
     } catch (error) {
-      this.logger.log('No active global settings found, seeding default settings...');
+      this.logger.log(
+        'No active global settings found, seeding default settings...',
+      );
       await this.globalSettingsSeeder.seed();
       return await this.globalSettingsService.findActive();
     }
@@ -76,7 +78,7 @@ export class SettingsProvider implements OnModuleInit {
       notifications: settings.notificationSettings,
       security: settings.systemSettings,
       features: settings.systemSettings,
-      payment: settings.paymentSettings
+      payment: settings.paymentSettings,
     };
   }
 
@@ -87,17 +89,28 @@ export class SettingsProvider implements OnModuleInit {
     return {
       ...base,
       ...(tenantSettings.smtpSettings && { smtp: tenantSettings.smtpSettings }),
-      ...(tenantSettings.notificationSettings && { notifications: tenantSettings.notificationSettings }),
-      ...(tenantSettings.systemSettings && { security: tenantSettings.systemSettings }),
-      ...(tenantSettings.systemSettings && { features: tenantSettings.systemSettings }),
-      ...(tenantSettings.brandingSettings && { branding: tenantSettings.brandingSettings }),
+      ...(tenantSettings.notificationSettings && {
+        notifications: tenantSettings.notificationSettings,
+      }),
+      ...(tenantSettings.systemSettings && {
+        security: tenantSettings.systemSettings,
+      }),
+      ...(tenantSettings.systemSettings && {
+        features: tenantSettings.systemSettings,
+      }),
+      ...(tenantSettings.brandingSettings && {
+        branding: tenantSettings.brandingSettings,
+      }),
     };
   }
 
-  private async getTenantSettings(tenantId: string): Promise<TenantSetting | null> {
+  private async getTenantSettings(
+    tenantId: string,
+  ): Promise<TenantSetting | null> {
     if (!this.tenantSettingsCache.has(tenantId)) {
       try {
-        const settings = await this.tenantSettingsService.findByTenant(tenantId);
+        const settings =
+          await this.tenantSettingsService.findByTenant(tenantId);
         this.tenantSettingsCache.set(tenantId, settings);
       } catch (error) {
         return null;
@@ -106,14 +119,20 @@ export class SettingsProvider implements OnModuleInit {
     return this.tenantSettingsCache.get(tenantId) || null;
   }
 
-  private mergeSmtpSettings(global: GlobalSetting, tenant?: TenantSetting | null) {
+  private mergeSmtpSettings(
+    global: GlobalSetting,
+    tenant?: TenantSetting | null,
+  ) {
     if (tenant?.smtpSettings?.useCustomSmtp) {
       return tenant.smtpSettings;
     }
     return global.smtpSettings;
   }
 
-  private mergeNotificationSettings(global: GlobalSetting, tenant?: TenantSetting | null) {
+  private mergeNotificationSettings(
+    global: GlobalSetting,
+    tenant?: TenantSetting | null,
+  ) {
     const baseSettings = global.notificationSettings;
     if (!tenant?.notificationSettings?.useCustomNotifications) {
       return baseSettings;
@@ -129,7 +148,10 @@ export class SettingsProvider implements OnModuleInit {
     };
   }
 
-  private mergeSecuritySettings(global: GlobalSetting, tenant?: TenantSetting | null) {
+  private mergeSecuritySettings(
+    global: GlobalSetting,
+    tenant?: TenantSetting | null,
+  ) {
     const baseSettings = global.systemSettings;
     if (!tenant?.securitySettings) {
       return baseSettings;
@@ -145,7 +167,10 @@ export class SettingsProvider implements OnModuleInit {
     };
   }
 
-  private mergeFeatureSettings(global: GlobalSetting, tenant?: TenantSetting | null) {
+  private mergeFeatureSettings(
+    global: GlobalSetting,
+    tenant?: TenantSetting | null,
+  ) {
     if (!tenant?.featureSettings) {
       return {
         enabledFeatures: [],
@@ -167,4 +192,4 @@ export class SettingsProvider implements OnModuleInit {
       this.tenantSettingsCache.clear();
     }
   }
-} 
+}

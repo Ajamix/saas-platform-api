@@ -18,7 +18,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
 import { TenantGuard } from '../tenants/guards/tenant.guard';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 import { DynamicPermissionsGuard } from '../permissions/guards/dynamic-permissions.guard';
 import { ControllerPermissions } from '../permissions/decorators/controller-permissions.decorator';
@@ -35,10 +41,10 @@ export class UsersController {
   @ApiResponse({ status: 201, type: User })
   async create(@Body() createUserDto: CreateUserDto, @Request() req) {
     const { tenantId, ...userData } = createUserDto;
-    
+
     return this.usersService.create({
       ...userData,
-      tenantId: req.user.tenantId
+      tenantId: req.user.tenantId,
     });
   }
 
@@ -47,7 +53,7 @@ export class UsersController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiResponse({ 
+  @ApiResponse({
     status: 200,
     description: 'Returns paginated list of users',
     schema: {
@@ -56,9 +62,9 @@ export class UsersController {
         total: 100,
         page: 1,
         limit: 10,
-        totalPages: 10
-      }
-    }
+        totalPages: 10,
+      },
+    },
   })
   findAll(
     @Request() req,
@@ -69,7 +75,7 @@ export class UsersController {
     return this.usersService.findAll(req.user.tenantId, {
       page,
       limit,
-      search
+      search,
     });
   }
 
@@ -84,9 +90,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, type: User })
   update(
-    @Param('id', ParseUUIDPipe) id: string, 
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
-    @Request() req
+    @Request() req,
   ) {
     return this.usersService.update(id, updateUserDto);
   }

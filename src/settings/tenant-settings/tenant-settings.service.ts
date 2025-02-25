@@ -16,15 +16,17 @@ export class TenantSettingsService {
     private readonly activityLogsService: ActivityLogsService,
   ) {}
 
-  async create(createTenantSettingDto: CreateTenantSettingDto, user: User, request?: Request) {
+  async create(
+    createTenantSettingDto: CreateTenantSettingDto,
+    user: User,
+    request?: Request,
+  ) {
     const settings = this.tenantSettingRepository.create({
       ...createTenantSettingDto,
       tenantId: user.tenantId,
     });
 
     const savedSettings = await this.tenantSettingRepository.save(settings);
-
-
 
     return savedSettings;
   }
@@ -42,17 +44,26 @@ export class TenantSettingsService {
     return settings;
   }
 
-  async update(tenantId: string, updateTenantSettingDto: UpdateTenantSettingDto, user: User, request?: Request) {
+  async update(
+    tenantId: string,
+    updateTenantSettingDto: UpdateTenantSettingDto,
+    user: User,
+    request?: Request,
+  ) {
     const settings = await this.findByTenant(tenantId);
 
     Object.assign(settings, updateTenantSettingDto);
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-
     return updatedSettings;
   }
 
-  async updateSmtpSettings(tenantId: string, smtpSettings: TenantSetting['smtpSettings'], user: User, request?: Request) {
+  async updateSmtpSettings(
+    tenantId: string,
+    smtpSettings: TenantSetting['smtpSettings'],
+    user: User,
+    request?: Request,
+  ) {
     const settings = await this.findByTenant(tenantId);
 
     settings.smtpSettings = {
@@ -61,8 +72,6 @@ export class TenantSettingsService {
     };
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
-
-
 
     return updatedSettings;
   }
@@ -82,8 +91,6 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
- 
-
     return updatedSettings;
   }
 
@@ -101,8 +108,6 @@ export class TenantSettingsService {
     };
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
-
-  
 
     return updatedSettings;
   }
@@ -122,7 +127,6 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-
     return updatedSettings;
   }
 
@@ -141,15 +145,11 @@ export class TenantSettingsService {
 
     const updatedSettings = await this.tenantSettingRepository.save(settings);
 
-
-
     return updatedSettings;
   }
 
   async remove(tenantId: string, user: User, request?: Request) {
     const settings = await this.findByTenant(tenantId);
     await this.tenantSettingRepository.remove(settings);
-
-
   }
 }

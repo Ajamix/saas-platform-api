@@ -10,9 +10,9 @@ import { SuperAdminSeeder } from './super-admin.seeder';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Permission, Role, GlobalSetting, SuperAdmin])
+    TypeOrmModule.forFeature([Permission, Role, GlobalSetting, SuperAdmin]),
   ],
   providers: [PermissionSeeder, GlobalSettingsSeeder, SuperAdminSeeder],
   exports: [PermissionSeeder, GlobalSettingsSeeder, SuperAdminSeeder],
 })
-export class DatabaseSeederModule {} 
+export class DatabaseSeederModule {}

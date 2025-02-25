@@ -10,15 +10,10 @@ import { SuperAdminModule } from '../../super-admin/super-admin.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Tenant,
-      Subscription,
-      SubscriptionPlan
-    ]),
+    TypeOrmModule.forFeature([User, Tenant, Subscription, SubscriptionPlan]),
     SuperAdminModule,
   ],
   controllers: [AdminDashboardController],
-  providers: [AdminDashboardService]
+  providers: [AdminDashboardService],
 })
 export class AdminDashboardModule {}

@@ -35,38 +35,63 @@ export class StripeService {
   private async getStripeSecretKey(): Promise<string> {
     const settings = await this.globalSettingRepository.find();
     const setting = settings[0];
-    if (!setting || !setting.paymentSettings || !setting.paymentSettings.stripeSecretKey) {
+    if (
+      !setting ||
+      !setting.paymentSettings ||
+      !setting.paymentSettings.stripeSecretKey
+    ) {
       throw new Error('Stripe secret key not found in global settings.');
     }
     return setting.paymentSettings.stripeSecretKey;
   }
-  async cancelStripeSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
+  async cancelStripeSubscription(
+    subscriptionId: string,
+  ): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.cancel(subscriptionId);
   }
-  async createCheckoutSession(priceId: string, successUrl: string, cancelUrl: string) {
+  async createCheckoutSession(
+    priceId: string,
+    successUrl: string,
+    cancelUrl: string,
+  ) {
     return this.stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
       mode: 'subscription',
       success_url: successUrl,
       cancel_url: cancelUrl,
     });
   }
-  async getStripeSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
+  async getStripeSubscription(
+    subscriptionId: string,
+  ): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.retrieve(subscriptionId);
   }
-  async constructEvent(payload: Buffer, signature: string): Promise<Stripe.Event> {
+  async constructEvent(
+    payload: Buffer,
+    signature: string,
+  ): Promise<Stripe.Event> {
     const webhookSecret = await this.getStripeWebhookSecret();
-    return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    return this.stripe.webhooks.constructEvent(
+      payload,
+      signature,
+      webhookSecret,
+    );
   }
 
   private async getStripeWebhookSecret(): Promise<string> {
     const settings = await this.globalSettingRepository.find();
     const setting = settings[0];
-    if (!setting || !setting.paymentSettings || !setting.paymentSettings.stripeWebhookSecret) {
+    if (
+      !setting ||
+      !setting.paymentSettings ||
+      !setting.paymentSettings.stripeWebhookSecret
+    ) {
       throw new Error('Stripe webhook secret not found in global settings.');
     }
     return setting.paymentSettings.stripeWebhookSecret;
@@ -95,12 +120,15 @@ export class StripeService {
     return this.stripe.checkout.sessions.listLineItems(sessionId);
   }
 
-  async updateSubscriptionStatus(customerEmail: string, stripeProductId: string,subscriptionId:string): Promise<void> {
+  async updateSubscriptionStatus(
+    customerEmail: string,
+    stripeProductId: string,
+    subscriptionId: string,
+  ): Promise<void> {
     // Find the subscription plan associated with the Stripe subscription ID
     console.log(stripeProductId);
     const plan = await this.subscriptionPlanRepository.findOne({
       where: { stripeProductId: stripeProductId },
-
     });
     const user = await this.userRepository.findOne({
       where: { email: customerEmail },
@@ -114,24 +142,23 @@ export class StripeService {
     }
 
     // Create a new Subscription entity
-   
-   // Create a new Subscription entity
-   const subscription = this.subscriptionRepository.create({
-    tenantId: user?.tenant.id, // Assuming you have a way to determine the tenant
-    planId: plan.id,
-    status: 'active',
-    currentPeriodStart: new Date(),
-    currentPeriodEnd: calculateCurrentPeriodEnd(plan.interval),
-    stripeCustomerId: customerEmail,
-    stripeSubscriptionId: subscriptionId,
-    priceAtCreation: plan.price, // Set the price at the time of creation
-  });
 
-  await this.subscriptionRepository.save(subscription);
+    // Create a new Subscription entity
+    const subscription = this.subscriptionRepository.create({
+      tenantId: user?.tenant.id, // Assuming you have a way to determine the tenant
+      planId: plan.id,
+      status: 'active',
+      currentPeriodStart: new Date(),
+      currentPeriodEnd: calculateCurrentPeriodEnd(plan.interval),
+      stripeCustomerId: customerEmail,
+      stripeSubscriptionId: subscriptionId,
+      priceAtCreation: plan.price, // Set the price at the time of creation
+    });
+
+    await this.subscriptionRepository.save(subscription);
 
     await this.subscriptionRepository.save(subscription);
   }
-  
 }
 function calculateCurrentPeriodEnd(interval: string): Date {
   const currentDate = new Date();

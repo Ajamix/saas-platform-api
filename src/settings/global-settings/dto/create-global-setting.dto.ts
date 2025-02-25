@@ -1,128 +1,139 @@
-import { IsString, IsNumber, IsBoolean, IsObject, IsOptional, IsIn, IsUrl, IsEmail, Min, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsObject,
+  IsOptional,
+  IsIn,
+  IsUrl,
+  IsEmail,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SmtpSettingsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'smtp.gmail.com',
-    description: 'SMTP server host'
+    description: 'SMTP server host',
   })
   @IsString()
   host: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 587,
-    description: 'SMTP server port'
+    description: 'SMTP server port',
   })
   @IsNumber()
   @Min(1)
   port: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Whether to use SSL/TLS'
+    description: 'Whether to use SSL/TLS',
   })
   @IsBoolean()
   secure: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'user@example.com',
-    description: 'SMTP authentication username'
+    description: 'SMTP authentication username',
   })
   @IsString()
   user: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'password123',
-    description: 'SMTP authentication password'
+    description: 'SMTP authentication password',
   })
   @IsString()
   password: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'noreply@example.com',
-    description: 'Default sender email address'
+    description: 'Default sender email address',
   })
   @IsEmail()
   from: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'My Company',
-    description: 'Default sender name'
+    description: 'Default sender name',
   })
   @IsString()
   fromName: string;
 }
 
 export class NotificationTypesDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable notifications for new user registrations'
+    description: 'Enable notifications for new user registrations',
   })
   @IsBoolean()
   userRegistration: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable notifications for password reset requests'
+    description: 'Enable notifications for password reset requests',
   })
   @IsBoolean()
   passwordReset: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable notifications for subscription changes'
+    description: 'Enable notifications for subscription changes',
   })
   @IsBoolean()
   subscriptionChanges: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable notifications for payment reminders'
+    description: 'Enable notifications for payment reminders',
   })
   @IsBoolean()
   paymentReminders: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable notifications for system updates'
+    description: 'Enable notifications for system updates',
   })
   @IsBoolean()
   systemUpdates: boolean;
 }
 
 export class NotificationSettingsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable email notifications globally'
+    description: 'Enable email notifications globally',
   })
   @IsBoolean()
   enableEmailNotifications: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable push notifications globally'
+    description: 'Enable push notifications globally',
   })
   @IsBoolean()
   enablePushNotifications: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable in-app notifications globally'
+    description: 'Enable in-app notifications globally',
   })
   @IsBoolean()
   enableInAppNotifications: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '<html>...</html>',
-    description: 'Default email template HTML'
+    description: 'Default email template HTML',
   })
   @IsString()
   defaultEmailTemplate: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: NotificationTypesDto,
-    description: 'Configuration for different notification types'
+    description: 'Configuration for different notification types',
   })
   @ValidateNested()
   @Type(() => NotificationTypesDto)
@@ -130,127 +141,127 @@ export class NotificationSettingsDto {
 }
 
 export class PaymentSettingsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable Stripe payment gateway'
+    description: 'Enable Stripe payment gateway',
   })
   @IsBoolean()
   stripeEnabled: boolean;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'pk_test_123',
-    description: 'Stripe public key'
+    description: 'Stripe public key',
   })
   @IsString()
   @IsOptional()
   stripePublicKey: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'sk_test_123',
-    description: 'Stripe secret key'
+    description: 'Stripe secret key',
   })
   @IsString()
   @IsOptional()
   stripeSecretKey: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'whsec_123',
-    description: 'Stripe webhook secret key'
+    description: 'Stripe webhook secret key',
   })
   @IsString()
   @IsOptional()
   stripeWebhookSecret: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Enable PayPal payment gateway'
+    description: 'Enable PayPal payment gateway',
   })
   @IsBoolean()
   paypalEnabled: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'client_id_123',
-    description: 'PayPal client ID'
+    description: 'PayPal client ID',
   })
   @IsString()
   @IsOptional()
   paypalClientId: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'client_secret_123',
-    description: 'PayPal client secret'
+    description: 'PayPal client secret',
   })
   @IsString()
   @IsOptional()
   paypalClientSecret: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'sandbox',
     enum: ['sandbox', 'production'],
-    description: 'PayPal environment mode'
+    description: 'PayPal environment mode',
   })
   @IsString()
   @IsIn(['sandbox', 'production'])
   paypalEnvironment: 'sandbox' | 'production';
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'USD',
-    description: 'Default currency for payments'
+    description: 'Default currency for payments',
   })
   @IsString()
   currency: string;
 }
 
 export class PasswordPolicyDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: 8,
     minimum: 6,
-    description: 'Minimum password length'
+    description: 'Minimum password length',
   })
   @IsNumber()
   @Min(6)
   minLength: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Require numbers in password'
+    description: 'Require numbers in password',
   })
   @IsBoolean()
   requireNumbers: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Require special characters in password'
+    description: 'Require special characters in password',
   })
   @IsBoolean()
   requireSpecialChars: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Require uppercase letters in password'
+    description: 'Require uppercase letters in password',
   })
   @IsBoolean()
   requireUppercase: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Require lowercase letters in password'
+    description: 'Require lowercase letters in password',
   })
   @IsBoolean()
   requireLowercase: boolean;
 }
 
 export class SystemSettingsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: false,
-    description: 'Enable maintenance mode'
+    description: 'Enable maintenance mode',
   })
   @IsBoolean()
   maintenanceMode: boolean;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'System under maintenance',
-    description: 'Message to display during maintenance'
+    description: 'Message to display during maintenance',
   })
   @IsString()
   maintenanceMessage: string;
@@ -274,9 +285,9 @@ export class SystemSettingsDto {
 }
 
 export class DefaultTenantSettingsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: true,
-    description: 'Allow tenants to configure custom SMTP'
+    description: 'Allow tenants to configure custom SMTP',
   })
   @IsBoolean()
   allowCustomSmtp: boolean;
@@ -297,18 +308,18 @@ export class DefaultTenantSettingsDto {
 }
 
 export class CreateGlobalSettingDto {
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     type: SmtpSettingsDto,
-    description: 'SMTP server configuration'
+    description: 'SMTP server configuration',
   })
   @ValidateNested()
   @Type(() => SmtpSettingsDto)
   @IsOptional()
   smtpSettings?: SmtpSettingsDto;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     type: NotificationSettingsDto,
-    description: 'Global notification settings'
+    description: 'Global notification settings',
   })
   @ValidateNested()
   @Type(() => NotificationSettingsDto)
@@ -330,17 +341,17 @@ export class CreateGlobalSettingDto {
   @IsOptional()
   defaultTenantSettings?: DefaultTenantSettingsDto;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: true,
-    description: 'Whether these settings are currently active'
+    description: 'Whether these settings are currently active',
   })
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: { lastUpdatedBy: 'admin' },
-    description: 'Additional metadata'
+    description: 'Additional metadata',
   })
   @IsObject()
   @IsOptional()

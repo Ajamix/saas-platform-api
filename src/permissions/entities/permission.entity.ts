@@ -16,6 +16,6 @@ export class Permission extends BaseEntity {
   @Column()
   action: string;
 
-  @ManyToMany(() => Role, role => role.permissions)
+  @ManyToMany(() => Role, (role) => role.permissions)
   roles: Role[];
 }

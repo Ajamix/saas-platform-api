@@ -44,41 +44,41 @@ export class AdminDashboardService {
       recentTenants,
       subscriptionsByPlan,
       activeTenantsCount,
-      inactiveTenantsCount
+      inactiveTenantsCount,
     ] = await Promise.all([
       // Total users count
       this.userRepository.count(),
-      
+
       // Total tenants count
       this.tenantRepository.count(),
-      
+
       // Active subscriptions count
       this.subscriptionRepository.count({
-        where: { status: 'active' }
+        where: { status: 'active' },
       }),
-      
+
       // Total revenue calculation
       this.calculateTotalRevenue(),
-      
+
       // Recent tenants
       this.tenantRepository.find({
         take: 5,
         order: { createdAt: 'DESC' },
-        relations: ['users']
+        relations: ['users'],
       }),
-      
+
       // Subscriptions grouped by plan
       this.getSubscriptionsByPlan(),
-      
+
       // Active tenants count
       this.tenantRepository.count({
-        where: { isActive: true }
+        where: { isActive: true },
       }),
-      
+
       // Inactive tenants count
       this.tenantRepository.count({
-        where: { isActive: false }
-      })
+        where: { isActive: false },
+      }),
     ]);
 
     return {
@@ -88,7 +88,7 @@ export class AdminDashboardService {
         activeSubscriptions,
         totalRevenue,
         activeTenantsCount,
-        inactiveTenantsCount
+        inactiveTenantsCount,
       },
       recentTenants,
       subscriptionsByPlan,
@@ -107,8 +107,6 @@ export class AdminDashboardService {
     }, 0);
   }
 
-
-
   private async getSubscriptionsByPlan(): Promise<PlanStats[]> {
     const plans = await this.subscriptionPlanRepository.find();
     const result: PlanStats[] = [];
@@ -117,21 +115,23 @@ export class AdminDashboardService {
       const count = await this.subscriptionRepository.count({
         where: {
           planId: plan.id,
-          status: 'active'
-        }
+          status: 'active',
+        },
       });
 
       result.push({
         plan: plan.name,
         count,
-        revenue: count * plan.price
+        revenue: count * plan.price,
       });
     }
 
     return result;
   }
 
-  async getTenantGrowthStats(period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
+  async getTenantGrowthStats(
+    period: 'daily' | 'weekly' | 'monthly' = 'monthly',
+  ) {
     const now = new Date();
     const startDate = new Date();
 
@@ -147,7 +147,8 @@ export class AdminDashboardService {
         break;
     }
 
-    const tenants = await this.tenantRepository.createQueryBuilder('tenant')
+    const tenants = await this.tenantRepository
+      .createQueryBuilder('tenant')
       .where('tenant.createdAt >= :startDate', { startDate })
       .andWhere('tenant.createdAt <= :endDate', { endDate: now })
       .getMany();
@@ -155,7 +156,12 @@ export class AdminDashboardService {
     return this.aggregateGrowthStats(tenants, period, startDate, now);
   }
 
-  private aggregateGrowthStats(tenants: Tenant[], period: string, startDate: Date, endDate: Date): GrowthStat[] {
+  private aggregateGrowthStats(
+    tenants: Tenant[],
+    period: string,
+    startDate: Date,
+    endDate: Date,
+  ): GrowthStat[] {
     const stats: GrowthStat[] = [];
     const current = new Date(startDate);
 
@@ -175,23 +181,26 @@ export class AdminDashboardService {
           break;
       }
 
-      const count = tenants.filter(tenant => 
-        tenant.createdAt >= periodStart && tenant.createdAt < periodEnd
+      const count = tenants.filter(
+        (tenant) =>
+          tenant.createdAt >= periodStart && tenant.createdAt < periodEnd,
       ).length;
 
       stats.push({
         period: periodStart.toISOString().split('T')[0],
-        count
+        count,
       });
     }
 
     return stats;
   }
 
-  async getRevenueStats(period: 'daily' | 'weekly' | 'monthly' = 'monthly'): Promise<RevenueStat[]> {
+  async getRevenueStats(
+    period: 'daily' | 'weekly' | 'monthly' = 'monthly',
+  ): Promise<RevenueStat[]> {
     const now = new Date();
     const startDate = new Date();
-  
+
     switch (period) {
       case 'daily':
         startDate.setDate(startDate.getDate() - 30);
@@ -203,30 +212,30 @@ export class AdminDashboardService {
         startDate.setMonth(startDate.getMonth() - 12);
         break;
     }
-  
+
     const subscriptions = await this.subscriptionRepository.find({
       where: {
         currentPeriodEnd: MoreThanOrEqual(startDate), // Ensure subscriptions that were active during the period are included
       },
-      relations: ['plan']
+      relations: ['plan'],
     });
-  
+
     return this.aggregateRevenueStats(subscriptions, period);
   }
-  
+
   private aggregateRevenueStats(
     subscriptions: Subscription[],
-    period: string
+    period: string,
   ): RevenueStat[] {
     if (subscriptions.length === 0) return [];
-  
+
     // ✅ Find the latest subscription created
     const latestSubscriptionDate = subscriptions.reduce((latest, sub) => {
       return sub.createdAt > latest ? sub.createdAt : latest;
     }, subscriptions[0].createdAt);
-  
+
     // ✅ Set the start date as (latest - 10 periods)
-    let startDate = new Date(latestSubscriptionDate);
+    const startDate = new Date(latestSubscriptionDate);
     switch (period) {
       case 'daily':
         startDate.setDate(startDate.getDate() - 10);
@@ -238,15 +247,15 @@ export class AdminDashboardService {
         startDate.setMonth(startDate.getMonth() - 10);
         break;
     }
-  
+
     const endDate = new Date(latestSubscriptionDate);
     const stats: RevenueStat[] = [];
     let current = new Date(startDate);
-  
+
     while (current <= endDate) {
       const periodStart = new Date(current);
-      let periodEnd = new Date(periodStart);
-  
+      const periodEnd = new Date(periodStart);
+
       switch (period) {
         case 'daily':
           periodEnd.setDate(periodEnd.getDate() + 1);
@@ -260,40 +269,41 @@ export class AdminDashboardService {
           periodEnd.setDate(1);
           break;
       }
-  
+
       const revenue = subscriptions.reduce((total, sub) => {
-        let cycleStart = new Date(sub.currentPeriodStart);
-  
+        const cycleStart = new Date(sub.currentPeriodStart);
+
         while (cycleStart <= sub.currentPeriodEnd && cycleStart <= endDate) {
-          const monthStart = new Date(cycleStart.getFullYear(), cycleStart.getMonth(), 1);
+          const monthStart = new Date(
+            cycleStart.getFullYear(),
+            cycleStart.getMonth(),
+            1,
+          );
           const nextMonthStart = new Date(monthStart);
           nextMonthStart.setMonth(nextMonthStart.getMonth() + 1);
-  
+
           if (cycleStart >= periodStart && cycleStart < periodEnd) {
             total += sub.priceAtCreation || 0;
           }
-  
-          cycleStart.setMonth(cycleStart.getMonth() + (sub.plan.interval === 'monthly' ? 1 : 12));
+
+          cycleStart.setMonth(
+            cycleStart.getMonth() + (sub.plan.interval === 'monthly' ? 1 : 12),
+          );
         }
-  
+
         return total;
       }, 0);
-  
+
       stats.push({
         period: periodStart.toISOString().split('T')[0],
-        revenue
+        revenue,
       });
-  
+
       current = new Date(periodEnd);
     }
-  
+
     return stats;
   }
-  
-  
-  
-  
-  
 }
 function calculateBillingCycles(subscription: Subscription): number {
   const { currentPeriodStart, currentPeriodEnd, plan } = subscription;
@@ -301,9 +311,17 @@ function calculateBillingCycles(subscription: Subscription): number {
   const end = new Date(currentPeriodEnd);
 
   if (plan.interval === 'monthly') {
-    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)) + 1;
+    return (
+      Math.floor(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30),
+      ) + 1
+    );
   } else if (plan.interval === 'yearly') {
-    return Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365)) + 1;
+    return (
+      Math.floor(
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 365),
+      ) + 1
+    );
   } else {
     throw new Error('Unsupported interval type');
   }

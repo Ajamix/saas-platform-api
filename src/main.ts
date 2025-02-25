@@ -16,20 +16,20 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: [
-      'Content-Type', 
-      'Authorization', 
+      'Content-Type',
+      'Authorization',
       'X-Requested-With',
       'Accept',
       'Origin',
       'Cache-Control',
       'Last-Event-ID',
-      'refresh-token'
+      'refresh-token',
     ],
     exposedHeaders: [
       'Content-Type',
       'Cache-Control',
       'Connection',
-      'Last-Event-ID'
+      'Last-Event-ID',
     ],
   });
 
@@ -49,6 +49,8 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation available at: http://localhost:${port}/api/docs`);
+  console.log(
+    `Swagger documentation available at: http://localhost:${port}/api/docs`,
+  );
 }
 bootstrap();

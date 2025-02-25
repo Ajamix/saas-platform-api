@@ -11,13 +11,23 @@ import {
   ForbiddenException,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBody,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { TenantsService, TenantWithUserCount } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../super-admin/guards/super-admin.guard';
-import { CreateTenantSchema, TenantResponseSchema } from '../swagger/schemas/tenant.schema';
+import {
+  CreateTenantSchema,
+  TenantResponseSchema,
+} from '../swagger/schemas/tenant.schema';
 import { LogActivity } from '../common/decorators/log-activity.decorator';
 
 @ApiTags('Tenants')
@@ -32,10 +42,10 @@ export class TenantsController {
   @UseGuards(SuperAdminGuard)
   @ApiOperation({ summary: 'Create new tenant' })
   @ApiBody({ schema: CreateTenantSchema })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Tenant created successfully',
-    schema: TenantResponseSchema
+    schema: TenantResponseSchema,
   })
   @LogActivity()
   async create(@Body() createTenantDto: CreateTenantDto, @Request() req) {
@@ -48,7 +58,7 @@ export class TenantsController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
-  @ApiResponse({ 
+  @ApiResponse({
     status: 200,
     description: 'Returns paginated list of tenants',
     schema: {
@@ -57,15 +67,21 @@ export class TenantsController {
         total: 100,
         page: 1,
         limit: 10,
-        totalPages: 10
-      }
-    }
+        totalPages: 10,
+      },
+    },
   })
   async findAll(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
-  ): Promise<{ data: TenantWithUserCount[]; total: number; page: number; limit: number; totalPages: number }> {
+  ): Promise<{
+    data: TenantWithUserCount[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     return this.tenantsService.findAll(page, limit, search);
   }
 

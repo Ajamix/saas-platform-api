@@ -26,28 +26,35 @@ export class UsersService {
     private readonly emailService: EmailService,
   ) {}
 
-  async create(createUserDto: CreateUserDto, queryRunner?: QueryRunner): Promise<User> {
-    const repo = queryRunner ? queryRunner.manager.getRepository(User) : this.userRepository;
-    const roleRepo = queryRunner ? queryRunner.manager.getRepository(Role) : this.roleRepository;
-    
+  async create(
+    createUserDto: CreateUserDto,
+    queryRunner?: QueryRunner,
+  ): Promise<User> {
+    const repo = queryRunner
+      ? queryRunner.manager.getRepository(User)
+      : this.userRepository;
+    const roleRepo = queryRunner
+      ? queryRunner.manager.getRepository(Role)
+      : this.roleRepository;
+
     // Hash password
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    
+
     // Find roles if roleIds provided
     let roles: Role[] = [];
     if (createUserDto.roleIds?.length) {
       roles = await roleRepo.findBy({
         id: In(createUserDto.roleIds),
-        tenantId: createUserDto.tenantId
+        tenantId: createUserDto.tenantId,
       });
     }
 
     const user = repo.create({
       ...createUserDto,
       password: hashedPassword,
-      roles
+      roles,
     });
-    
+
     const savedUser = await repo.save(user);
 
     // Skip notifications during transaction (they'll be sent after commit)
@@ -76,33 +83,34 @@ export class UsersService {
     return savedUser;
   }
 
-  async findAll(tenantId: string, options: { 
-    page?: number, 
-    limit?: number, 
-    search?: string 
-  } = {}): Promise<{ 
-    data: User[],
-    total: number,
-    page: number,
-    limit: number,
-    totalPages: number
+  async findAll(
+    tenantId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+    } = {},
+  ): Promise<{
+    data: User[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   }> {
-    const { 
-      page = 1, 
-      limit = 10, 
-      search 
-    } = options;
+    const { page = 1, limit = 10, search } = options;
 
     const skip = (page - 1) * limit;
-    const query = this.userRepository.createQueryBuilder('user')
+    const query = this.userRepository
+      .createQueryBuilder('user')
       .where('user.tenantId = :tenantId', { tenantId })
       .leftJoinAndSelect('user.roles', 'roles')
       .skip(skip)
       .take(limit);
 
     if (search) {
-      query.andWhere('(user.firstName ILIKE :search OR user.lastName ILIKE :search OR user.email ILIKE :search)', 
-        { search: `%${search}%` }
+      query.andWhere(
+        '(user.firstName ILIKE :search OR user.lastName ILIKE :search OR user.email ILIKE :search)',
+        { search: `%${search}%` },
       );
     }
 
@@ -113,7 +121,7 @@ export class UsersService {
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     };
   }
 
@@ -130,11 +138,14 @@ export class UsersService {
     return user;
   }
 
-  async findByEmailAndTenant(email: string | null, tenantId: string): Promise<User | User[]> {
+  async findByEmailAndTenant(
+    email: string | null,
+    tenantId: string,
+  ): Promise<User | User[]> {
     if (email) {
       const user = await this.userRepository.findOne({
         where: { email, tenantId },
-        relations: ['tenant', 'roles','roles.permissions'],
+        relations: ['tenant', 'roles', 'roles.permissions'],
       });
 
       if (!user) {
@@ -158,7 +169,7 @@ export class UsersService {
     if (updateUserDto.roleIds?.length) {
       user.roles = await this.roleRepository.findBy({
         id: In(updateUserDto.roleIds),
-        tenantId: user.tenantId
+        tenantId: user.tenantId,
       });
     }
 
@@ -167,7 +178,7 @@ export class UsersService {
 
     if (updateUserDto.roleIds && user.tenantId) {
       const tenant = await this.tenantsService.findOne(user.tenantId);
-      
+
       // Notify the user about their role change
       await this.notificationsService.sendNotification({
         type: 'team_update',
@@ -175,8 +186,8 @@ export class UsersService {
         data: {
           companyName: tenant.name,
           action: 'role_changed',
-          oldRoles: user.roles.map(r => r.name),
-          newRoles: updatedUser.roles.map(r => r.name),
+          oldRoles: user.roles.map((r) => r.name),
+          newRoles: updatedUser.roles.map((r) => r.name),
           effectiveDate: new Date(),
         },
         tenantId: tenant.id,
@@ -196,8 +207,8 @@ export class UsersService {
               action: 'role_changed',
               memberName: `${updatedUser.firstName} ${updatedUser.lastName}`,
               memberEmail: updatedUser.email,
-              oldRoles: user.roles.map(r => r.name),
-              newRoles: updatedUser.roles.map(r => r.name),
+              oldRoles: user.roles.map((r) => r.name),
+              newRoles: updatedUser.roles.map((r) => r.name),
               teamUrl: '/team',
             },
             tenantId: tenant.id,
@@ -211,7 +222,7 @@ export class UsersService {
 
   async remove(id: string): Promise<void> {
     const user = await this.findOne(id);
-    
+
     if (user.tenantId) {
       const tenant = await this.tenantsService.findOne(user.tenantId);
       const adminUsers = await this.findByEmailAndTenant(null, tenant.id);
@@ -252,16 +263,26 @@ export class UsersService {
     return await this.verificationTokenRepository.save(verificationToken);
   }
 
-  async resendVerificationEmail(user: User): Promise<{ message: string, waitTime?: number }> {
+  async resendVerificationEmail(
+    user: User,
+  ): Promise<{ message: string; waitTime?: number }> {
     const existingToken = await this.verificationTokenRepository.findOne({
       where: { user },
       order: { createdAt: 'DESC' },
     });
 
     const now = new Date();
-    if (existingToken && (now.getTime() - existingToken.createdAt.getTime()) < 60000) {
-      const waitTime = 60 - Math.floor((now.getTime() - existingToken.createdAt.getTime()) / 1000);
-      return { message: 'Please wait before resending the verification email.', waitTime };
+    if (
+      existingToken &&
+      now.getTime() - existingToken.createdAt.getTime() < 60000
+    ) {
+      const waitTime =
+        60 -
+        Math.floor((now.getTime() - existingToken.createdAt.getTime()) / 1000);
+      return {
+        message: 'Please wait before resending the verification email.',
+        waitTime,
+      };
     }
 
     const newToken = await this.generateVerificationToken(user);

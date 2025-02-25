@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -16,7 +20,9 @@ export class SuperAdminService {
     private readonly subscriptionPlanRepository: Repository<SubscriptionPlan>,
   ) {}
 
-  async createSuperAdmin(createSuperAdminDto: CreateSuperAdminDto): Promise<SuperAdmin> {
+  async createSuperAdmin(
+    createSuperAdminDto: CreateSuperAdminDto,
+  ): Promise<SuperAdmin> {
     const existingSuperAdmin = await this.superAdminRepository.findOne({
       where: { email: createSuperAdminDto.email },
     });
@@ -35,19 +41,30 @@ export class SuperAdminService {
     return this.superAdminRepository.save(superAdmin);
   }
   async findSuperAdminByEmail(email: string): Promise<SuperAdmin | null> {
-    const superAdmin = await this.superAdminRepository.findOne({ where: { email } });
+    const superAdmin = await this.superAdminRepository.findOne({
+      where: { email },
+    });
 
     return superAdmin;
   }
 
   // Subscription Plan Management
-  async createSubscriptionPlan(createSubscriptionPlanDto: CreateSubscriptionPlanDto): Promise<SubscriptionPlan> {
-    const plan = this.subscriptionPlanRepository.create(createSubscriptionPlanDto);
+  async createSubscriptionPlan(
+    createSubscriptionPlanDto: CreateSubscriptionPlanDto,
+  ): Promise<SubscriptionPlan> {
+    const plan = this.subscriptionPlanRepository.create(
+      createSubscriptionPlanDto,
+    );
     return this.subscriptionPlanRepository.save(plan);
   }
 
-  async updateSubscriptionPlan(id: string, updateData: Partial<CreateSubscriptionPlanDto>): Promise<SubscriptionPlan> {
-    const plan = await this.subscriptionPlanRepository.findOne({ where: { id } });
+  async updateSubscriptionPlan(
+    id: string,
+    updateData: Partial<CreateSubscriptionPlanDto>,
+  ): Promise<SubscriptionPlan> {
+    const plan = await this.subscriptionPlanRepository.findOne({
+      where: { id },
+    });
     if (!plan) {
       throw new NotFoundException('Subscription plan not found');
     }
@@ -57,7 +74,7 @@ export class SuperAdminService {
   }
 
   async deleteSubscriptionPlan(id: string): Promise<void> {
-    const result = await this.subscriptionPlanRepository.delete(id);
+    const result = await this.subscriptionPlanRepository.softDelete(id);
     if (result.affected === 0) {
       throw new NotFoundException('Subscription plan not found');
     }
@@ -68,10 +85,12 @@ export class SuperAdminService {
   }
 
   async getSubscriptionPlan(id: string): Promise<SubscriptionPlan> {
-    const plan = await this.subscriptionPlanRepository.findOne({ where: { id } });
+    const plan = await this.subscriptionPlanRepository.findOne({
+      where: { id },
+    });
     if (!plan) {
       throw new NotFoundException('Subscription plan not found');
     }
     return plan;
   }
-} 
+}

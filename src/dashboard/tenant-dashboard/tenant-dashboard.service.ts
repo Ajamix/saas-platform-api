@@ -32,50 +32,45 @@ export class TenantDashboardService {
   async getTenantDashboardStats(tenantId: string) {
     const tenant = await this.tenantRepository.findOne({
       where: { id: tenantId },
-      relations: ['users']
+      relations: ['users'],
     });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
     }
 
-    const [
-      totalUsers,
-      activeUsers,
-      currentSubscription,
-      roles,
-      recentUsers
-    ] = await Promise.all([
-      // Total users count
-      this.userRepository.count({
-        where: { tenantId }
-      }),
-      
-      // Active users count
-      this.userRepository.count({
-        where: { tenantId, isActive: true }
-      }),
-      
-      // Current subscription
-      this.subscriptionRepository.findOne({
-        where: { tenantId, status: 'active' },
-        relations: ['plan']
-      }),
-      
-      // Roles count
-      this.roleRepository.find({
-        where: { tenant: { id: tenantId } },
-        relations: ['permissions']
-      }),
-      
-      // Recent users
-      this.userRepository.find({
-        where: { tenantId },
-        take: 5,
-        order: { createdAt: 'DESC' },
-        relations: ['roles']
-      })
-    ]);
+    const [totalUsers, activeUsers, currentSubscription, roles, recentUsers] =
+      await Promise.all([
+        // Total users count
+        this.userRepository.count({
+          where: { tenantId },
+        }),
+
+        // Active users count
+        this.userRepository.count({
+          where: { tenantId, isActive: true },
+        }),
+
+        // Current subscription
+        this.subscriptionRepository.findOne({
+          where: { tenantId, status: 'active' },
+          relations: ['plan'],
+        }),
+
+        // Roles count
+        this.roleRepository.find({
+          where: { tenant: { id: tenantId } },
+          relations: ['permissions'],
+        }),
+
+        // Recent users
+        this.userRepository.find({
+          where: { tenantId },
+          take: 5,
+          order: { createdAt: 'DESC' },
+          relations: ['roles'],
+        }),
+      ]);
 
     return {
       overview: {
@@ -83,22 +78,27 @@ export class TenantDashboardService {
         activeUsers,
         inactiveUsers: totalUsers - activeUsers,
         totalRoles: roles.length,
-        subscription: currentSubscription ? {
-          plan: currentSubscription.plan.name,
-          status: currentSubscription.status,
-          currentPeriodEnd: currentSubscription.currentPeriodEnd
-        } : null
+        subscription: currentSubscription
+          ? {
+              plan: currentSubscription.plan.name,
+              status: currentSubscription.status,
+              currentPeriodEnd: currentSubscription.currentPeriodEnd,
+            }
+          : null,
       },
       recentUsers,
-      roles: roles.map(role => ({
+      roles: roles.map((role) => ({
         name: role.name,
         permissionsCount: role.permissions.length,
-        description: role.description
-      }))
+        description: role.description,
+      })),
     };
   }
 
-  async getUserActivityStats(tenantId: string, period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
+  async getUserActivityStats(
+    tenantId: string,
+    period: 'daily' | 'weekly' | 'monthly' = 'monthly',
+  ) {
     const now = new Date();
     const startDate = new Date();
 
@@ -114,7 +114,8 @@ export class TenantDashboardService {
         break;
     }
 
-    const users = await this.userRepository.createQueryBuilder('user')
+    const users = await this.userRepository
+      .createQueryBuilder('user')
       .where('user.tenantId = :tenantId', { tenantId })
       .andWhere('user.createdAt >= :startDate', { startDate })
       .andWhere('user.createdAt <= :endDate', { endDate: now })
@@ -123,7 +124,12 @@ export class TenantDashboardService {
     return this.aggregateUserStats(users, period, startDate, now);
   }
 
-  private aggregateUserStats(users: User[], period: string, startDate: Date, endDate: Date): UserActivityStat[] {
+  private aggregateUserStats(
+    users: User[],
+    period: string,
+    startDate: Date,
+    endDate: Date,
+  ): UserActivityStat[] {
     const stats: UserActivityStat[] = [];
     const current = new Date(startDate);
 
@@ -143,13 +149,13 @@ export class TenantDashboardService {
           break;
       }
 
-      const count = users.filter(user => 
-        user.createdAt >= periodStart && user.createdAt < periodEnd
+      const count = users.filter(
+        (user) => user.createdAt >= periodStart && user.createdAt < periodEnd,
       ).length;
 
       stats.push({
         period: periodStart.toISOString().split('T')[0],
-        newUsers: count
+        newUsers: count,
       });
     }
 
@@ -159,12 +165,12 @@ export class TenantDashboardService {
   async getRoleDistribution(tenantId: string): Promise<RoleDistribution[]> {
     const roles = await this.roleRepository.find({
       where: { tenant: { id: tenantId } },
-      relations: ['users']
+      relations: ['users'],
     });
 
-    return roles.map(role => ({
+    return roles.map((role) => ({
       role: role.name,
-      userCount: role.users.length
+      userCount: role.users.length,
     }));
   }
 }

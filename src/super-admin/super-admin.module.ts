@@ -17,4 +17,4 @@ import { ConfigModule } from '@nestjs/config';
   providers: [SuperAdminService],
   exports: [SuperAdminService],
 })
-export class SuperAdminModule {} 
+export class SuperAdminModule {}

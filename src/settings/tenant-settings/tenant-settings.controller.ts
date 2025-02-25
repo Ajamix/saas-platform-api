@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Delete, UseGuards, Req, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Delete,
+  UseGuards,
+  Req,
+  ForbiddenException,
+} from '@nestjs/common';
 import { TenantSettingsService } from './tenant-settings.service';
 import { CreateTenantSettingDto } from './dto/create-tenant-setting.dto';
 import { UpdateTenantSettingDto } from './dto/update-tenant-setting.dto';
@@ -7,7 +17,13 @@ import { TenantGuard } from '../../tenants/guards/tenant.guard';
 import { Request } from 'express';
 import { User } from '../../users/entities/user.entity';
 import { TenantSetting } from './entities/tenant-setting.entity';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+} from '@nestjs/swagger';
 import { TenantSettingsSchema } from '../../swagger/schemas/settings.schema';
 
 interface RequestWithUser extends Request {
@@ -24,13 +40,20 @@ export class TenantSettingsController {
   @Post()
   @ApiOperation({ summary: 'Create tenant settings' })
   @ApiBody({ schema: TenantSettingsSchema })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Tenant settings created successfully',
-    schema: TenantSettingsSchema
+    schema: TenantSettingsSchema,
   })
-  async create(@Body() createTenantSettingDto: CreateTenantSettingDto, @Req() request: RequestWithUser) {
-    return this.tenantSettingsService.create(createTenantSettingDto, request.user, request);
+  async create(
+    @Body() createTenantSettingDto: CreateTenantSettingDto,
+    @Req() request: RequestWithUser,
+  ) {
+    return this.tenantSettingsService.create(
+      createTenantSettingDto,
+      request.user,
+      request,
+    );
   }
 
   @Get()
@@ -42,21 +65,46 @@ export class TenantSettingsController {
 
   @Patch()
   @ApiOperation({ summary: 'Update tenant settings' })
-  @ApiResponse({ status: 200, description: 'Tenant settings updated successfully' })
-  async update(@Body() updateTenantSettingDto: UpdateTenantSettingDto, @Req() request: RequestWithUser) {
-    return this.tenantSettingsService.update(request.user.tenantId, updateTenantSettingDto, request.user, request);
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant settings updated successfully',
+  })
+  async update(
+    @Body() updateTenantSettingDto: UpdateTenantSettingDto,
+    @Req() request: RequestWithUser,
+  ) {
+    return this.tenantSettingsService.update(
+      request.user.tenantId,
+      updateTenantSettingDto,
+      request.user,
+      request,
+    );
   }
 
   @Patch('smtp')
   @ApiOperation({ summary: 'Update tenant SMTP settings' })
-  @ApiResponse({ status: 200, description: 'SMTP settings updated successfully' })
-  async updateSmtpSettings(@Body() smtpSettings: TenantSetting['smtpSettings'], @Req() request: RequestWithUser) {
-    return this.tenantSettingsService.updateSmtpSettings(request.user.tenantId, smtpSettings, request.user, request);
+  @ApiResponse({
+    status: 200,
+    description: 'SMTP settings updated successfully',
+  })
+  async updateSmtpSettings(
+    @Body() smtpSettings: TenantSetting['smtpSettings'],
+    @Req() request: RequestWithUser,
+  ) {
+    return this.tenantSettingsService.updateSmtpSettings(
+      request.user.tenantId,
+      smtpSettings,
+      request.user,
+      request,
+    );
   }
 
   @Patch('notifications')
   @ApiOperation({ summary: 'Update tenant notification settings' })
-  @ApiResponse({ status: 200, description: 'Notification settings updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification settings updated successfully',
+  })
   async updateNotificationSettings(
     @Body() notificationSettings: TenantSetting['notificationSettings'],
     @Req() request: RequestWithUser,
@@ -71,7 +119,10 @@ export class TenantSettingsController {
 
   @Patch('branding')
   @ApiOperation({ summary: 'Update tenant branding settings' })
-  @ApiResponse({ status: 200, description: 'Branding settings updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Branding settings updated successfully',
+  })
   async updateBrandingSettings(
     @Body() brandingSettings: TenantSetting['brandingSettings'],
     @Req() request: RequestWithUser,
@@ -86,7 +137,10 @@ export class TenantSettingsController {
 
   @Patch('security')
   @ApiOperation({ summary: 'Update tenant security settings' })
-  @ApiResponse({ status: 200, description: 'Security settings updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Security settings updated successfully',
+  })
   async updateSecuritySettings(
     @Body() securitySettings: TenantSetting['securitySettings'],
     @Req() request: RequestWithUser,
@@ -101,7 +155,10 @@ export class TenantSettingsController {
 
   @Patch('features')
   @ApiOperation({ summary: 'Update tenant feature settings' })
-  @ApiResponse({ status: 200, description: 'Feature settings updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Feature settings updated successfully',
+  })
   async updateFeatureSettings(
     @Body() featureSettings: TenantSetting['featureSettings'],
     @Req() request: RequestWithUser,
@@ -116,8 +173,15 @@ export class TenantSettingsController {
 
   @Delete()
   @ApiOperation({ summary: 'Delete tenant settings' })
-  @ApiResponse({ status: 200, description: 'Tenant settings deleted successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant settings deleted successfully',
+  })
   async remove(@Req() request: RequestWithUser) {
-    return this.tenantSettingsService.remove(request.user.tenantId, request.user, request);
+    return this.tenantSettingsService.remove(
+      request.user.tenantId,
+      request.user,
+      request,
+    );
   }
 }

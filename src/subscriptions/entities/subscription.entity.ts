@@ -50,6 +50,9 @@ export class Subscription extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   metadata?: Record<string, any>;
 
-  @Column({ type: 'float' }) 
+  @Column({ type: 'float' })
   priceAtCreation: number;
+
+  @Column({ type: 'jsonb', default: [] })
+  features: { maxReviewTypes: number; maxSubmissionsPerReviewType: number };
 }

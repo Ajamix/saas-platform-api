@@ -9,14 +9,14 @@ export class SubscriptionPlan extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({type:'float'})
+  @Column({ type: 'float' })
   price: number;
 
   @Column()
   interval: string; // monthly, yearly
 
   @Column({ type: 'jsonb', default: [] })
-  features: string[];
+  features: { maxReviewTypes: number; maxSubmissionsPerReviewType: number }[];
 
   @Column({ default: true })
   isActive: boolean;
@@ -26,4 +26,4 @@ export class SubscriptionPlan extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   stripeProductId: string;
-} 
+}

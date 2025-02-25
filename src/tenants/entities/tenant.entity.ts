@@ -16,6 +16,6 @@ export class Tenant extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   settings: Record<string, any>;
 
-  @OneToMany(() => User, user => user.tenant)
+  @OneToMany(() => User, (user) => user.tenant)
   users: User[];
 }

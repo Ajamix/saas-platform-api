@@ -57,4 +57,4 @@ export interface TenantDashboardStats {
     permissionsCount: number;
     description?: string;
   }[];
-} 
+}

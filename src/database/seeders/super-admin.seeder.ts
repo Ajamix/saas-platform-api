@@ -16,19 +16,19 @@ export class SuperAdminSeeder {
   async seed() {
     try {
       const existingSuperAdmin = await this.superAdminRepository.findOne({
-        where: { email: 'superadmin@example.com' }
+        where: { email: 'superadmin@example.com' },
       });
 
       if (!existingSuperAdmin) {
         const hashedPassword = await bcrypt.hash('aliali12', 10);
-        
+
         const superAdmin = this.superAdminRepository.create({
           email: 'superadmin@example.com',
           password: hashedPassword,
           firstName: 'Super',
           lastName: 'Admin',
           isActive: true,
-          permissions: ['*'] // All permissions
+          permissions: ['*'], // All permissions
         });
 
         await this.superAdminRepository.save(superAdmin);
@@ -41,4 +41,4 @@ export class SuperAdminSeeder {
       throw error;
     }
   }
-} 
+}

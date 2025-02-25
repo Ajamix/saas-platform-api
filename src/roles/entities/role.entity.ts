@@ -19,7 +19,7 @@ export class Role extends BaseEntity {
   @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
   tenant: Tenant;
 
-  @ManyToMany(() => User, user => user.roles)
+  @ManyToMany(() => User, (user) => user.roles)
   users: User[];
 
   @ManyToMany(() => Permission)
@@ -31,6 +31,9 @@ export class Role extends BaseEntity {
   permissions: Permission[];
 
   @Column({ default: false })
-  @ApiProperty({ example: false, description: 'Whether this is a default role' })
+  @ApiProperty({
+    example: false,
+    description: 'Whether this is a default role',
+  })
   isDefault: boolean;
 }

@@ -21,29 +21,35 @@ export class NotificationsSseController {
     @Headers('origin') origin: string,
   ): Promise<Observable<MessageEvent>> {
     // Check origin against allowed origins
-    const allowedOrigin = this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
+    const allowedOrigin =
+      this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
     if (origin && origin !== allowedOrigin) {
       throw new Error('Origin not allowed');
     }
 
-    return new Observable<MessageEvent>(subscriber => {
+    return new Observable<MessageEvent>((subscriber) => {
       // Initial unread notifications
-      this.notificationsService.getUnreadNotifications(user.id, user.tenantId)
-        .then(notifications => {
+      this.notificationsService
+        .getUnreadNotifications(user.id, user.tenantId)
+        .then((notifications) => {
           subscriber.next({
             data: JSON.stringify(notifications), // Make sure to stringify the data
             type: 'notifications',
-            lastEventId: Date.now().toString()
+            lastEventId: Date.now().toString(),
           } as MessageEvent);
         });
 
       // Poll for new notifications
       const interval = setInterval(async () => {
-        const notifications = await this.notificationsService.getUnreadNotifications(user.id, user.tenantId);
+        const notifications =
+          await this.notificationsService.getUnreadNotifications(
+            user.id,
+            user.tenantId,
+          );
         subscriber.next({
           data: JSON.stringify(notifications), // Make sure to stringify the data
           type: 'notifications',
-          lastEventId: Date.now().toString()
+          lastEventId: Date.now().toString(),
         } as MessageEvent);
       }, 10000);
 
@@ -53,4 +59,4 @@ export class NotificationsSseController {
       };
     });
   }
-} 
+}

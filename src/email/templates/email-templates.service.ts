@@ -11,7 +11,13 @@ export class EmailTemplatesService implements OnModuleInit {
   constructor() {
     // Use src in development and dist in production
     const baseDir = process.env.NODE_ENV === 'production' ? 'dist' : 'src';
-    this.templatesDir = join(process.cwd(), baseDir, 'email', 'templates', 'views');
+    this.templatesDir = join(
+      process.cwd(),
+      baseDir,
+      'email',
+      'templates',
+      'views',
+    );
   }
 
   async onModuleInit() {
@@ -39,22 +45,28 @@ export class EmailTemplatesService implements OnModuleInit {
         } else {
           console.warn(`Template file not found: ${templatePath}`);
           // Set a default template as fallback
-          this.templates.set(name, Handlebars.compile(this.getDefaultTemplate(name)));
+          this.templates.set(
+            name,
+            Handlebars.compile(this.getDefaultTemplate(name)),
+          );
         }
       } catch (error) {
         console.error(`Error loading template ${name}:`, error);
         // Set a default template as fallback
-        this.templates.set(name, Handlebars.compile(this.getDefaultTemplate(name)));
+        this.templates.set(
+          name,
+          Handlebars.compile(this.getDefaultTemplate(name)),
+        );
       }
     }
   }
 
   private registerHelpers() {
-    Handlebars.registerHelper('formatDate', function(date: Date) {
+    Handlebars.registerHelper('formatDate', function (date: Date) {
       return date ? date.toLocaleDateString() : '';
     });
 
-    Handlebars.registerHelper('formatCurrency', function(amount: number) {
+    Handlebars.registerHelper('formatCurrency', function (amount: number) {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
@@ -106,4 +118,4 @@ export class EmailTemplatesService implements OnModuleInit {
 
     return template(baseContext);
   }
-} 
+}

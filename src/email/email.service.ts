@@ -11,8 +11,10 @@ export class EmailService implements OnModuleInit {
   private transporters: Map<string, Transporter> = new Map();
   private defaultTransporter: Transporter;
 
-  constructor(private readonly settingsProvider: SettingsProvider,
-              private readonly emailTemplatesService: EmailTemplatesService) {}
+  constructor(
+    private readonly settingsProvider: SettingsProvider,
+    private readonly emailTemplatesService: EmailTemplatesService,
+  ) {}
 
   async onModuleInit() {
     // Initialize default transporter with global settings
@@ -40,7 +42,8 @@ export class EmailService implements OnModuleInit {
     }
 
     if (!this.transporters.has(tenantId)) {
-      const settings = await this.settingsProvider.getEffectiveSettings(tenantId);
+      const settings =
+        await this.settingsProvider.getEffectiveSettings(tenantId);
       const smtpConfig = settings.smtp;
 
       // If tenant uses custom SMTP, create a new transporter
@@ -91,11 +94,12 @@ export class EmailService implements OnModuleInit {
   }) {
     const { to, templateKey, context, tenantId } = options;
     const settings = await this.settingsProvider.getEffectiveSettings(tenantId);
-    
+
     // Get template based on settings
-    const template = tenantId && settings.notifications.customEmailTemplates?.[templateKey]
-      ? settings.notifications.customEmailTemplates[templateKey]
-      : settings.notifications.defaultEmailTemplate;
+    const template =
+      tenantId && settings.notifications.customEmailTemplates?.[templateKey]
+        ? settings.notifications.customEmailTemplates[templateKey]
+        : settings.notifications.defaultEmailTemplate;
 
     // TODO: Implement template rendering with context
     const html = template; // Replace with actual template rendering
@@ -118,8 +122,10 @@ export class EmailService implements OnModuleInit {
   }
 
   async sendVerificationEmail(to: string, token: string) {
-    const baseUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`;
-    const verificationLink = `${baseUrl}/api/auth/verify-email?token=${token}`;    const context = {
+    const baseUrl =
+      process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`;
+    const verificationLink = `${baseUrl}/api/auth/verify-email?token=${token}`;
+    const context = {
       companyName: 'Your Company',
       firstName: 'User', // Replace with actual user's first name
       verificationRequired: true,
@@ -129,7 +135,10 @@ export class EmailService implements OnModuleInit {
       email: to,
     };
 
-    const html = this.emailTemplatesService.renderTemplate('user-registration', context);
+    const html = this.emailTemplatesService.renderTemplate(
+      'user-registration',
+      context,
+    );
 
     const subject = 'Email Verification';
 
@@ -139,4 +148,4 @@ export class EmailService implements OnModuleInit {
       html,
     });
   }
-} 
+}

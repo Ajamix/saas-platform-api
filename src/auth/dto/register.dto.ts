@@ -8,7 +8,10 @@ export class RegisterTenantDto {
   @IsNotEmpty()
   tenantName: string;
 
-  @ApiProperty({ example: 'my-company', description: 'Subdomain for the tenant' })
+  @ApiProperty({
+    example: 'my-company',
+    description: 'Subdomain for the tenant',
+  })
   @IsString()
   @IsNotEmpty()
   subdomain: string;
@@ -37,10 +40,10 @@ export class RegisterDto {
 
   @ApiProperty({
     description: 'Tenant information',
-    type: RegisterTenantDto
+    type: RegisterTenantDto,
   })
   @ValidateNested()
   @Type(() => RegisterTenantDto)
   @IsNotEmpty()
   tenant: RegisterTenantDto;
-} 
+}

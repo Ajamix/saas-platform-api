@@ -11,7 +11,9 @@ describe('TenantDashboardController', () => {
       providers: [TenantDashboardService],
     }).compile();
 
-    controller = module.get<TenantDashboardController>(TenantDashboardController);
+    controller = module.get<TenantDashboardController>(
+      TenantDashboardController,
+    );
   });
 
   it('should be defined', () => {

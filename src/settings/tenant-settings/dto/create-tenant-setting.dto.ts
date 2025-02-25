@@ -1,4 +1,16 @@
-import { IsString, IsNumber, IsBoolean, IsObject, IsOptional, IsUUID, IsUrl, IsEmail, Min, ValidateNested, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsObject,
+  IsOptional,
+  IsUUID,
+  IsUrl,
+  IsEmail,
+  Min,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TenantSmtpSettingsDto {

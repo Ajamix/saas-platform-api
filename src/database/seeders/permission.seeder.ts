@@ -33,7 +33,9 @@ export class PermissionSeeder {
           this.logger.log(`Added permissions to role ${role.name}`);
         }
       } else {
-        this.logger.log('No roles found. Permissions created but not assigned.');
+        this.logger.log(
+          'No roles found. Permissions created but not assigned.',
+        );
       }
     } catch (error) {
       this.logger.error('Error seeding permissions:', error.message);
@@ -184,7 +186,7 @@ export class PermissionSeeder {
 
     for (const permission of permissions) {
       const exists = await this.permissionRepository.findOne({
-        where: { name: permission.name }
+        where: { name: permission.name },
       });
 
       if (!exists) {
@@ -197,6 +199,4 @@ export class PermissionSeeder {
 
     return savedPermissions;
   }
-
-
-} 
+}

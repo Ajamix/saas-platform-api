@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
 import { ActivityLogsService } from '../../activity-logs/activity-logs.service';
 import { ActivityType } from '../../activity-logs/entities/activity-log.entity';
@@ -62,17 +67,18 @@ export class ActivityLoggerInterceptor implements NestInterceptor {
               responseData: response,
               tenantId: user.tenantId, // Only log for tenants
             },
-            request
+            request,
           );
         } catch (error) {
           console.error('Activity logging failed:', error);
         }
-      })
+      }),
     );
   }
 
   private async checkIfSuperAdmin(email: string): Promise<boolean> {
-    const superAdmin = await this.superAdminService.findSuperAdminByEmail(email);
+    const superAdmin =
+      await this.superAdminService.findSuperAdminByEmail(email);
     return !!superAdmin;
   }
 

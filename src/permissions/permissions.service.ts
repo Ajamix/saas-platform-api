@@ -14,8 +14,8 @@ export class PermissionsService {
     return this.permissionRepository.find({
       order: {
         resource: 'ASC',
-        action: 'ASC'
-      }
+        action: 'ASC',
+      },
     });
   }
 

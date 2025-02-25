@@ -18,7 +18,7 @@ import { TenantGuard } from './guards/tenant.guard';
     SuperAdminModule,
   ],
   controllers: [TenantsController],
-  providers: [TenantsService,TenantGuard],
+  providers: [TenantsService, TenantGuard],
   exports: [TenantsService],
 })
 export class TenantsModule {}

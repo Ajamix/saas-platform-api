@@ -18,15 +18,13 @@ console.log('NotificationsModule Loaded');
 @Module({
   imports: [
     TypeOrmModule.forFeature([Notification, PushSubscription, User]),
-    ConfigModule,    SettingsModule,
+    ConfigModule,
+    SettingsModule,
     EmailModule,
     ActivityLogsModule,
     forwardRef(() => UsersModule),
   ],
-  controllers: [
-    NotificationsController,
-    NotificationsSseController,
-  ],
+  controllers: [NotificationsController, NotificationsSseController],
   providers: [
     NotificationsService,
     NotificationsSse,

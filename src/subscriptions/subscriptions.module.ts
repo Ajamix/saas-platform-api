@@ -11,16 +11,21 @@ import { TenantsModule } from '../tenants/tenants.module';
 import { User } from 'src/users/entities/user.entity';
 import { StripeService } from 'src/stripe/stripe.service';
 import { GlobalSetting } from 'src/settings/global-settings/entities/global-setting.entity';
-  @Module({
+@Module({
   imports: [
-    TypeOrmModule.forFeature([Subscription, SubscriptionPlan, User,GlobalSetting]),
+    TypeOrmModule.forFeature([
+      Subscription,
+      SubscriptionPlan,
+      User,
+      GlobalSetting,
+    ]),
     SuperAdminModule,
     NotificationsModule,
     UsersModule,
     TenantsModule,
   ],
   controllers: [SubscriptionsController],
-  providers: [SubscriptionsService,StripeService],
+  providers: [SubscriptionsService, StripeService],
   exports: [SubscriptionsService],
 })
 export class SubscriptionsModule {}

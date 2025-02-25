@@ -24,6 +24,8 @@ import { ActivityLoggerInterceptor } from './common/interceptors/activity-logger
 import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { StripeModule } from './stripe/stripe.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { ReviewSubmissionsModule } from './review-submissions/review-submissions.module';
 
 @Module({
   imports: [
@@ -72,6 +74,8 @@ import { StripeModule } from './stripe/stripe.module';
     PermissionsModule,
     RolesModule,
     StripeModule,
+    ReviewsModule,
+    ReviewSubmissionsModule,
   ],
   // controllers: [AppController],
   providers: [
@@ -91,7 +95,7 @@ export class AppModule {
       .addBearerAuth()
       .addServer('')
       .build();
-    
+
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api/docs', app, document);
   }

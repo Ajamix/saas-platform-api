@@ -18,9 +18,7 @@ export class PaymentService implements OnModuleInit {
     const paymentSettings = settings.payment;
 
     if (paymentSettings.stripeEnabled) {
-      this.stripeClient = new Stripe(paymentSettings.stripeSecretKey, {
-        
-      });
+      this.stripeClient = new Stripe(paymentSettings.stripeSecretKey, {});
     }
 
     if (paymentSettings.paypalEnabled) {
@@ -110,7 +108,7 @@ export class PaymentService implements OnModuleInit {
       const event = this.stripeClient.webhooks.constructEvent(
         body,
         signature,
-        settings.payment.stripeWebhookSecret
+        settings.payment.stripeWebhookSecret,
       );
       return this.handleStripeWebhook(event);
     } else if (paymentMethod === 'paypal' && settings.payment.paypalEnabled) {
@@ -135,4 +133,4 @@ export class PaymentService implements OnModuleInit {
       // Add more event handlers as needed
     }
   }
-} 
+}

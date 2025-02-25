@@ -11,7 +11,7 @@ import { PushNotificationsService } from './push/push-notifications.service';
 import { EmailTemplatesService } from '../email/templates/email-templates.service';
 import { NotificationsSse } from './notifications.sse';
 
-export type NotificationType = 
+export type NotificationType =
   | 'user_registration'
   | 'password_reset'
   | 'subscription_change'
@@ -50,7 +50,8 @@ export class NotificationsService {
   async sendNotification(options: NotificationOptions) {
     try {
       const { type, user, data, tenantId } = options;
-      const settings = await this.settingsProvider.getEffectiveSettings(tenantId);
+      const settings =
+        await this.settingsProvider.getEffectiveSettings(tenantId);
 
       // Check if notification type is enabled
       if (!this.isNotificationTypeEnabled(type, settings.notifications)) {
@@ -82,7 +83,7 @@ export class NotificationsService {
               type,
               ...data,
             },
-          })
+          }),
         );
       }
 
@@ -102,7 +103,7 @@ export class NotificationsService {
             ].filter(Boolean),
             data,
           },
-        })
+        }),
       );
 
       await Promise.all(promises);
@@ -111,7 +112,7 @@ export class NotificationsService {
     } catch (error) {
       this.logger.error(
         `Failed to create notification: ${error.message}`,
-        error.stack
+        error.stack,
       );
       console.log(`Failed to create notification: ${error.message}`);
     }
@@ -132,7 +133,7 @@ export class NotificationsService {
       {
         user,
         ...data,
-      }
+      },
     );
 
     try {
@@ -145,7 +146,7 @@ export class NotificationsService {
     } catch (emailError) {
       this.logger.warn(
         `Failed to send email notification: ${emailError.message}`,
-        emailError.stack
+        emailError.stack,
       );
       // Continue execution - don't let email failures break the app
     }
@@ -180,7 +181,10 @@ export class NotificationsService {
     return this.notificationRepository.save(notification);
   }
 
-  private isNotificationTypeEnabled(type: NotificationType, settings: any): boolean {
+  private isNotificationTypeEnabled(
+    type: NotificationType,
+    settings: any,
+  ): boolean {
     const typeMapping: Record<NotificationType, string> = {
       user_registration: 'userRegistration',
       password_reset: 'passwordReset',
@@ -222,7 +226,10 @@ export class NotificationsService {
     return titleMapping[type];
   }
 
-  private getDefaultMessage(type: NotificationType, data: Record<string, any>): string {
+  private getDefaultMessage(
+    type: NotificationType,
+    data: Record<string, any>,
+  ): string {
     // TODO: Implement proper message templates
     return `Notification of type ${type}`;
   }
@@ -236,7 +243,7 @@ export class NotificationsService {
       notification.isRead = true;
       notification.readAt = new Date();
       await this.notificationRepository.save(notification);
-      
+
       // Notify other connected devices via WebSocket
       this.notificationsSse.sendNotificationToUser(userId, {
         type: 'notification_read',
@@ -259,7 +266,7 @@ export class NotificationsService {
   }
 
   async deleteNotification(notificationId: string, userId: string) {
-    await this.notificationRepository.delete({
+    await this.notificationRepository.softDelete({
       id: notificationId,
       userId,
     });
@@ -272,7 +279,7 @@ export class NotificationsService {
   }
 
   async clearNotifications(userId: string, tenantId?: string) {
-    await this.notificationRepository.delete({
+    await this.notificationRepository.softDelete({
       userId,
       tenantId,
     });
@@ -282,4 +289,4 @@ export class NotificationsService {
       type: 'notifications_cleared',
     });
   }
-} 
+}

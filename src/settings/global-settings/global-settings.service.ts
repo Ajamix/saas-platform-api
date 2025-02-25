@@ -16,10 +16,15 @@ export class GlobalSettingsService {
     private readonly activityLogsService: ActivityLogsService,
   ) {}
 
-  async create(createGlobalSettingDto: CreateGlobalSettingDto, user: User, request?: Request) {
-    const settings = this.globalSettingRepository.create(createGlobalSettingDto);
+  async create(
+    createGlobalSettingDto: CreateGlobalSettingDto,
+    user: User,
+    request?: Request,
+  ) {
+    const settings = this.globalSettingRepository.create(
+      createGlobalSettingDto,
+    );
     const savedSettings = await this.globalSettingRepository.save(settings);
-
 
     return savedSettings;
   }
@@ -43,13 +48,13 @@ export class GlobalSettingsService {
   async findActivePublicPaymentSettings() {
     const settings = await this.globalSettingRepository.findOne({
       where: { isActive: true },
-      select: ['paymentSettings'], 
+      select: ['paymentSettings'],
     });
-  
+
     if (!settings || !settings.paymentSettings) {
       return null;
     }
-  
+
     return {
       currency: settings.paymentSettings.currency,
       stripeEnabled: settings.paymentSettings.stripeEnabled,
@@ -68,18 +73,26 @@ export class GlobalSettingsService {
     return settings;
   }
 
-  async update(id: string, updateGlobalSettingDto: UpdateGlobalSettingDto, user: User, request?: Request) {
+  async update(
+    id: string,
+    updateGlobalSettingDto: UpdateGlobalSettingDto,
+    user: User,
+    request?: Request,
+  ) {
     const settings = await this.findOne(id);
 
     Object.assign(settings, updateGlobalSettingDto);
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
-
-
     return updatedSettings;
   }
 
-  async updateSmtpSettings(id: string, smtpSettings: GlobalSetting['smtpSettings'], user: User, request?: Request) {
+  async updateSmtpSettings(
+    id: string,
+    smtpSettings: GlobalSetting['smtpSettings'],
+    user: User,
+    request?: Request,
+  ) {
     const settings = await this.findOne(id);
 
     settings.smtpSettings = {
@@ -88,8 +101,6 @@ export class GlobalSettingsService {
     };
 
     const updatedSettings = await this.globalSettingRepository.save(settings);
-
-
 
     return updatedSettings;
   }
@@ -109,12 +120,15 @@ export class GlobalSettingsService {
 
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
-
-
     return updatedSettings;
   }
 
-  async updatePaymentSettings(id: string, paymentSettings: GlobalSetting['paymentSettings'], user: User, request?: Request) {
+  async updatePaymentSettings(
+    id: string,
+    paymentSettings: GlobalSetting['paymentSettings'],
+    user: User,
+    request?: Request,
+  ) {
     const settings = await this.findOne(id);
 
     settings.paymentSettings = {
@@ -124,15 +138,11 @@ export class GlobalSettingsService {
 
     const updatedSettings = await this.globalSettingRepository.save(settings);
 
- 
-
     return updatedSettings;
   }
 
   async remove(id: string, user: User, request?: Request) {
     const settings = await this.findOne(id);
     await this.globalSettingRepository.remove(settings);
-
-
   }
 }
