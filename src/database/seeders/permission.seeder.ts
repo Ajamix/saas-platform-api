@@ -180,6 +180,55 @@ export class PermissionSeeder {
         resource: 'notifications',
         action: 'delete',
       },
+      {
+        name: 'view-reviews',
+        description: 'Can view reviews',
+        resource: 'reviews',
+        action: 'read',
+      },{
+        name: 'create-reviews',
+        description: 'Can create reviews',
+        resource: 'reviews',
+        action: 'create',
+      },
+      {
+        name: 'update-reviews',
+        description: 'Can update reviews',
+        resource: 'reviews',
+        action: 'update',
+      },{
+        name: 'delete-reviews',
+        description: 'Can delete reviews',
+        resource: 'reviews',
+        action: 'delete',
+      },
+      {
+        name: 'view-review-submissions',
+        description: 'Can view review submissions',
+        resource: 'review-submissions',
+        action: 'read',
+      },
+      {
+        name: 'create-review-submissions',
+        description: 'Can create review submissions',
+        resource: 'review-submissions',
+        action: 'create',
+      },
+
+      {
+        name: 'update-review-submissions',
+        description: 'Can update review submissions',
+        resource: 'review-submissions',
+        action: 'update',
+      },
+      {
+        name: 'delete-review-submissions',
+        description: 'Can delete review submissions',
+        resource: 'review-submissions',
+        action: 'delete',
+      },
+
+      
     ];
 
     const savedPermissions: Permission[] = [];

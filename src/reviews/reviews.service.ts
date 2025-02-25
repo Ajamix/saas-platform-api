@@ -48,7 +48,7 @@ export class ReviewsService {
   }
 
 
-  async findOne(id: number, tenantId: string): Promise<Review> {
+  async findOne(id: string, tenantId: string): Promise<Review> {
     const review = await this.reviewsRepository.findOne({
       where: { id: id.toString(), tenantId },
     });
@@ -60,7 +60,7 @@ export class ReviewsService {
     return review;
   }
 
-  async update(id: number, updateReviewDto: UpdateReviewDto, tenantId: string) {
+  async update(id: string, updateReviewDto: UpdateReviewDto, tenantId: string) {
     const review = await this.findOne(id, tenantId);
 
     if (!review) {
@@ -70,7 +70,7 @@ export class ReviewsService {
     return this.reviewsRepository.update(id, updateReviewDto);
   }
 
-  async remove(id: number, tenantId: string) {
+  async remove(id: string, tenantId: string) {
     const review = await this.findOne(id, tenantId);
 
     if (!review) {

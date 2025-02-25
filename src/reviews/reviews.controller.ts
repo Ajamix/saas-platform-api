@@ -43,20 +43,20 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Get a review by ID' })
   @ApiResponse({ status: 200, type: Review })
   findOne(@Param('id') id: string, @Request() req) {
-    return this.reviewsService.findOne(+id, req.user.tenantId);
+    return this.reviewsService.findOne(id, req.user.tenantId);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a review by ID' })
   @ApiResponse({ status: 200, type: Review })
   update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto, @Request() req) {
-    return this.reviewsService.update(+id, updateReviewDto, req.user.tenantId);
+    return this.reviewsService.update(id, updateReviewDto, req.user.tenantId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a review by ID' })
   @ApiResponse({ status: 200, type: Review })
   remove(@Param('id') id: string, @Request() req) {
-    return this.reviewsService.remove(+id, req.user.tenantId);
+    return this.reviewsService.remove(id, req.user.tenantId);
   }
 }

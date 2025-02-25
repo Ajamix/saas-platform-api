@@ -42,7 +42,7 @@ export class ReviewSubmissionsService {
     };
   }
 
-  async findOne(id: number, tenantId: string) {
+  async findOne(id: string, tenantId: string) {
     const reviewSubmission = await this.reviewSubmissionsRepository.findOne({
       where: { id: id.toString(), tenantId },
     });
@@ -54,7 +54,7 @@ export class ReviewSubmissionsService {
     return reviewSubmission;
   }
 
-  async update(id: number, updateReviewSubmissionDto: UpdateReviewSubmissionDto, tenantId: string) {
+  async update(id: string, updateReviewSubmissionDto: UpdateReviewSubmissionDto, tenantId: string) {
     const reviewSubmission = await this.findOne(id, tenantId);
 
     if (!reviewSubmission) {
@@ -64,7 +64,7 @@ export class ReviewSubmissionsService {
     return this.reviewSubmissionsRepository.update(id, updateReviewSubmissionDto);
   }
 
-  async remove(id: number, tenantId: string) {
+  async remove(id: string, tenantId: string) {
     const reviewSubmission = await this.findOne(id, tenantId);
 
     if (!reviewSubmission) {
