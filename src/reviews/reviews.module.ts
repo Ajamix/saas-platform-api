@@ -6,8 +6,9 @@ import { Review } from './entities/review.entity';
 import { GlobalSetting } from 'src/settings/global-settings/entities/global-setting.entity';
 import { GlobalSettingsModule } from 'src/settings/global-settings/global-settings.module';
 import { UsersModule } from 'src/users/users.module';
+import { ReviewSubmissionsModule } from 'src/review-submissions/review-submissions.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([Review]),GlobalSetting,GlobalSettingsModule, UsersModule],
+  imports: [TypeOrmModule.forFeature([Review]),GlobalSetting,GlobalSettingsModule, UsersModule,],
   controllers: [ReviewsController],
   providers: [ReviewsService],
 })

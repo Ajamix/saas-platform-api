@@ -15,6 +15,4 @@ export class ReviewSubmission extends BaseEntity {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column()
-  tenantId: string;
 }

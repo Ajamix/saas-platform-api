@@ -79,4 +79,10 @@ export class ReviewsService {
 
     return this.reviewsRepository.softDelete(id);
   }
+
+  async publish(id: string, tenantId: string) {
+    const review = await this.findOne(id, tenantId);
+    review.isPublished = !review.isPublished;
+    return this.reviewsRepository.save(review);
+  } 
 }

@@ -1,9 +1,7 @@
  export class CreateReviewSubmissionDto {
-    reviewTypeId: number;
+    reviewId: string;
     content?: string;
     rating?: number;
-    comment?: string;
-    tenantId: string;
     isActive: boolean;
   }
   

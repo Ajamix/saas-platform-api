@@ -24,7 +24,8 @@ export class Review extends BaseEntity{
   @Column()
   tenantId: string;
 
-
+  @Column({default: false})
+  isPublished: boolean;
   @OneToMany(() => ReviewSubmission, (reviewSubmission) => reviewSubmission.review)
   reviewSubmission: ReviewSubmission;
 

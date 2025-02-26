@@ -53,6 +53,13 @@ export class ReviewsController {
     return this.reviewsService.update(id, updateReviewDto, req.user.tenantId);
   }
 
+  @Patch(':id/publish')
+  @ApiOperation({ summary: 'Publish a review by ID' })
+  @ApiResponse({ status: 200, type: Review })
+  publish(@Param('id') id: string, @Request() req) {
+    return this.reviewsService.publish(id, req.user.tenantId);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a review by ID' })
   @ApiResponse({ status: 200, type: Review })
