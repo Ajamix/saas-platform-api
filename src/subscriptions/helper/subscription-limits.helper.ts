@@ -89,10 +89,13 @@ export class SubscriptionLimitsHelper {
   async getSubscriptionLimits(tenantId: string) {
     console.log('tenantId', tenantId);
     const startOfMonth = this.getStartOfMonth();
-    
+    let isTrial = false;
     const subscription = await this.subscriptionsService.getActiveSubscription(tenantId);
     const maxReviewsPerMonth = subscription?.plan.features?.maxReviewTypes ?? 1; // Default 1 for free users
     const maxSubmissionsPerReview = subscription?.plan.features?.maxSubmissionsPerReviewType ?? 2; // Default 2 for free users
+    if (maxReviewsPerMonth === 1) {
+        isTrial = true;
+    }
     const maxSubmissionsPerMonth = maxSubmissionsPerReview * maxReviewsPerMonth;
     // Fetch all required counts in parallel
     const [reviewCount, submissionCount, totalReviews, totalSubmissions] = await Promise.all([
@@ -104,7 +107,8 @@ export class SubscriptionLimitsHelper {
 
     // Calculate averages
     const avgSubmissionsPerReview = totalReviews > 0 ? totalSubmissions / totalReviews : 0;
-    const totalMonths = Math.max(1, new Date().getMonth() + 1); // Avoid division by zero
+    const totalMonths = Math.max(1, new Date().getMonth()); // Avoid division by zero
+    console.log('totalMonths', totalMonths);
     const avgSubmissionsPerMonth = totalSubmissions / totalMonths;
 
     return {
@@ -114,6 +118,7 @@ export class SubscriptionLimitsHelper {
       currentSubmissionCount: submissionCount,
       avgSubmissionsPerReview,
       avgSubmissionsPerMonth,
+      isTrial,
     };
   }
 }
