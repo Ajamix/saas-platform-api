@@ -15,8 +15,8 @@ export class SubscriptionPlan extends BaseEntity {
   @Column()
   interval: string; // monthly, yearly
 
-  @Column({ type: 'jsonb', default: [] })
-  features: { maxReviewTypes: number; maxSubmissionsPerReviewType: number }[];
+  @Column({ type: 'jsonb' })
+  features: { maxReviewTypes: number; maxSubmissionsPerReviewType: number };
 
   @Column({ default: true })
   isActive: boolean;

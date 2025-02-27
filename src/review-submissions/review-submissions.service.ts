@@ -146,7 +146,7 @@ export class ReviewSubmissionsService {
   }
   
 
-  async createPublicReviewSubmission(createReviewSubmissionDto: CreateReviewSubmissionDto, id: string) {
+  async createPublicReviewSubmission(createReviewSubmissionDto: CreateReviewSubmissionDto) {
     const review = await this.reviewRepository.findOne({ where: { id: createReviewSubmissionDto.reviewId }})
     if (!review) {
       throw new NotFoundException(`Review with ID "${createReviewSubmissionDto.reviewId}" not found`);

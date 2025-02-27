@@ -105,10 +105,10 @@ export class ReviewSubmissionsController {
     return this.reviewSubmissionsService.findAllPublished(reviewId, page, limit);
   }
 
-  @Post('create-public/:id')
+  @Post('create-public/')
   @ApiOperation({ summary: 'Publish a review submission by ID' })
   @ApiResponse({ status: 201, type: ReviewSubmission })
-  publish(@Param('id') id: string, @Body() createReviewSubmissionDto: CreateReviewSubmissionDto) {
-    return this.reviewSubmissionsService.createPublicReviewSubmission(createReviewSubmissionDto,id);
+  publish(@Body() createReviewSubmissionDto: CreateReviewSubmissionDto) {
+    return this.reviewSubmissionsService.createPublicReviewSubmission(createReviewSubmissionDto);
   }
 }

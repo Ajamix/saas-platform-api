@@ -30,9 +30,7 @@ export class CreateSubscriptionPlanDto {
   interval: string;
 
   @ApiProperty({ example: ['Feature 1', 'Feature 2'] })
-  @IsArray()
-  @IsString({ each: true })
-  features: { maxReviewTypes: number; maxSubmissionsPerReviewType: number }[];
+  features: { maxReviewTypes: number; maxSubmissionsPerReviewType: number };
 
   @ApiPropertyOptional({ default: true })
   @IsBoolean()

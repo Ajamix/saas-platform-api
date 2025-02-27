@@ -6,8 +6,8 @@ export class ReviewSubmission extends BaseEntity {
   @ManyToOne(() => Review, (Review) => Review.reviewSubmission)
   review: Review;
 
-  @Column()
-  content: string;
+  @Column({ nullable: true })
+  content?: string;
 
   @Column({ nullable: true })
   rating?: number;
