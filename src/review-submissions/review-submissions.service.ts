@@ -24,35 +24,25 @@ export class ReviewSubmissionsService {
   }
   
 
-  async findAll(
-    reviewId: string,
-    tenantId: string,
-    page = 1,
-    limit = 10,
-    search = '',
-  ) {
-    const query = this.reviewSubmissionsRepository.createQueryBuilder(
-      'reviewSubmission',
-    );
-  
-    // Join the 'review' relation so that you can filter on its properties
-    query.innerJoin('reviewSubmission.review', 'review');
-  
-    query.andWhere('review.id = :reviewId AND review.tenantId = :tenantId', { reviewId, tenantId });
+  async findAll(reviewId: string, page = 1, limit = 10, search = '') {
+    const query = this.reviewSubmissionsRepository
+      .createQueryBuilder('reviewSubmission')
+      .innerJoinAndSelect('reviewSubmission.review', 'review') // Ensures relation is loaded
+      .where('review.id = :reviewId', { reviewId });
   
     if (search) {
-      query.andWhere('reviewSubmission.name ILIKE :search', {
-        search: `%${search}%`,
+      query.andWhere('reviewSubmission.content ILIKE :search', {
+        search: `%${search}%`, // Ensure `content` field exists
       });
     }
   
-    // Fetch the review (only selecting its 'name') if needed for the response
     const review = await this.reviewRepository.findOne({
       where: { id: reviewId },
       select: ['name'],
     });
   
     const [reviewSubmissions, total] = await query
+      .orderBy('reviewSubmission.createdAt', 'DESC') // Ensuring pagination consistency
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

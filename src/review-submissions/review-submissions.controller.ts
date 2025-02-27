@@ -53,7 +53,6 @@ export class ReviewSubmissionsController {
   ) {
     return this.reviewSubmissionsService.findAll(
       reviewId,
-      req.user.tenantId,
       page,
       limit,
       search,

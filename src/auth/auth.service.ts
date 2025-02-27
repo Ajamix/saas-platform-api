@@ -131,13 +131,13 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    if (!user.isVerified) {
-      const resendResult =
-        await this.usersService.resendVerificationEmail(user);
-      throw new ForbiddenException(
-        `Please verify your email before logging in. ${resendResult.message}`,
-      );
-    }
+    // if (!user.isVerified) {
+    //   const resendResult =
+    //     await this.usersService.resendVerificationEmail(user);
+    //   throw new ForbiddenException(
+    //     `Please verify your email before logging in. ${resendResult.message}`,
+    //   );
+    // }
     const permissions = user.roles
       .flatMap((role) => role.permissions)
       .reduce(
