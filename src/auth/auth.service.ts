@@ -82,7 +82,7 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     // Try SuperAdmin login first
     const superAdmin = await this.validateSuperAdmin(
-      loginDto.email,
+      loginDto.email.toLowerCase().trim(),
       loginDto.password,
     );
     if (superAdmin) {
@@ -109,7 +109,7 @@ export class AuthService {
 
 
     const user = await this.validateUser(
-      loginDto.email,
+      loginDto.email.toLowerCase().trim(),
       loginDto.password,
     );
     if (!user) {
@@ -179,7 +179,7 @@ export class AuthService {
         .catch(() => null);
 
       if (existingTenant) {
-        throw new ConflictException('Subdomain already taken');
+        throw new ConflictException('Workspace already taken');
       }
 
       // Create tenant using queryRunner
@@ -195,7 +195,7 @@ export class AuthService {
       // Create user using queryRunner
       const user = await this.usersService.create(
         {
-          email: registerDto.email,
+          email: registerDto.email.toLowerCase().trim(),
           password: registerDto.password,
           firstName: registerDto.firstName,
           lastName: registerDto.lastName,
@@ -258,7 +258,7 @@ export class AuthService {
           email: superAdmin.email,
           sub: superAdmin.id,
           isSuperAdmin: true,
-          hasSetupProfile: true, // Super admins always have profile setup
+          hasSetupProfile: true, 
         };
       } else {
         // Handle tenant user refresh

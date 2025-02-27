@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, IsEmail, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterTenantDto {
@@ -21,6 +21,7 @@ export class RegisterDto {
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   @IsNotEmpty()
+  @Transform(({ value }) => value.toLowerCase().trim())
   email: string;
 
   @ApiProperty({ example: 'password123' })
