@@ -38,7 +38,12 @@ export class ReviewsController {
   ) {
     return this.reviewsService.findAll(req.user.tenantId, page, limit, search);
   }
-
+  @Get('subscription-limits')
+  @ApiOperation({ summary: 'Get subscription limits for tenant' })
+  @ApiResponse({ status: 200 })
+  getSubscriptionLimits(@Request() req) {
+    return this.reviewsService.getSubscriptionLimits(req.user.tenantId);
+  }
   @Get(':id')
   @ApiOperation({ summary: 'Get a review by ID' })
   @ApiResponse({ status: 200, type: Review })
@@ -66,4 +71,6 @@ export class ReviewsController {
   remove(@Param('id') id: string, @Request() req) {
     return this.reviewsService.remove(id, req.user.tenantId);
   }
+
+
 }

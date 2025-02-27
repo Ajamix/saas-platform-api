@@ -33,6 +33,21 @@ export class TenantDashboardService {
     const tenant = await this.tenantRepository.findOne({
       where: { id: tenantId },
       relations: ['users'],
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+        users: {
+          id: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+          isActive: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
     });
 
     if (!tenant) {
@@ -55,12 +70,30 @@ export class TenantDashboardService {
         this.subscriptionRepository.findOne({
           where: { tenantId, status: 'active' },
           relations: ['plan'],
+          select: {
+            id: true,
+            status: true,
+            currentPeriodEnd: true,
+            plan: {
+              id: true,
+              name: true,
+            },
+          },
         }),
 
         // Roles count
         this.roleRepository.find({
           where: { tenant: { id: tenantId } },
           relations: ['permissions'],
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            permissions: {
+              id: true,
+              name: true,
+            },
+          },
         }),
 
         // Recent users
@@ -69,6 +102,19 @@ export class TenantDashboardService {
           take: 5,
           order: { createdAt: 'DESC' },
           relations: ['roles'],
+          select: {
+            id: true,
+            email: true,
+            createdAt: true,
+            updatedAt: true,
+            isActive: true,
+            firstName: true,
+            lastName: true,
+            roles: {
+              id: true,
+              name: true,
+            },
+          },
         }),
       ]);
 

@@ -1,17 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { Repository } from 'typeorm';
 import { Review } from './entities/review.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SubscriptionLimitsHelper } from 'src/subscriptions/helper/subscription-limits.helper';
 
 @Injectable()
 export class ReviewsService {
   constructor(
     @InjectRepository(Review)
     private reviewsRepository: Repository<Review>,
+    private subscriptionLimitsHelper: SubscriptionLimitsHelper,
   ) {}
   async create(createReviewDto: CreateReviewDto, tenantId: string) {    
+    const canCreate = await this.subscriptionLimitsHelper.checkReviewTypeLimit(tenantId);
+    if (!canCreate) {
+      throw new BadRequestException('Review creation limit reached for your subscription plan');
+    }
     const review = this.reviewsRepository.create({
       ...createReviewDto,
       tenantId,
@@ -85,4 +91,8 @@ export class ReviewsService {
     review.isPublished = !review.isPublished;
     return this.reviewsRepository.save(review);
   } 
+
+  async getSubscriptionLimits(tenantId: string) {
+    return this.subscriptionLimitsHelper.getSubscriptionLimits(tenantId);
+  }
 }

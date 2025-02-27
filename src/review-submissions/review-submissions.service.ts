@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { ReviewSubmission } from './entities/review-submission.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Review } from 'src/reviews/entities/review.entity';
+import { SubscriptionLimitsHelper } from 'src/subscriptions/helper/subscription-limits.helper';
 
 @Injectable()
 export class ReviewSubmissionsService { 
@@ -13,9 +14,25 @@ export class ReviewSubmissionsService {
     private reviewSubmissionsRepository: Repository<ReviewSubmission>,
     @InjectRepository(Review)
     private reviewRepository: Repository<Review>,
+    private subscriptionLimitsHelper: SubscriptionLimitsHelper,
   ) {}
 
   async create(createReviewSubmissionDto: CreateReviewSubmissionDto) {
+    const review = await this.reviewRepository.findOne({
+      where: { id: createReviewSubmissionDto.reviewId },
+    });
+
+    if (!review) {
+      throw new NotFoundException(`Review with ID "${createReviewSubmissionDto.reviewId}" not found`);
+    }
+
+    const canCreate = await this.subscriptionLimitsHelper.checkReviewSubmissionLimit(
+      createReviewSubmissionDto.reviewId,
+      review.tenantId,
+    );
+    if (!canCreate) {
+      throw new BadRequestException('Review submission limit reached for your subscription plan');
+    }
     const reviewSubmission = this.reviewSubmissionsRepository.create({
       ...createReviewSubmissionDto,
       review: { id: createReviewSubmissionDto.reviewId },
