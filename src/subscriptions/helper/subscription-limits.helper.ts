@@ -87,7 +87,6 @@ export class SubscriptionLimitsHelper {
   }
 
   async getSubscriptionLimits(tenantId: string) {
-    console.log('tenantId', tenantId);
     const startOfMonth = this.getStartOfMonth();
     let isTrial = false;
     const subscription = await this.subscriptionsService.getActiveSubscription(tenantId);
@@ -108,7 +107,6 @@ export class SubscriptionLimitsHelper {
     // Calculate averages
     const avgSubmissionsPerReview = totalReviews > 0 ? totalSubmissions / totalReviews : 0;
     const totalMonths = Math.max(1, new Date().getMonth()); // Avoid division by zero
-    console.log('totalMonths', totalMonths);
     const avgSubmissionsPerMonth = totalSubmissions / totalMonths;
 
     return {
