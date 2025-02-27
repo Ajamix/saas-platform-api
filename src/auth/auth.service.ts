@@ -182,6 +182,10 @@ export class AuthService {
         throw new ConflictException('Workspace already taken');
       }
 
+      const existingUser = await this.userRepository.findOne({where:{email:registerDto.email.toLowerCase().trim()}})
+      if(existingUser){
+        throw new ConflictException('Email already taken');
+      }
       // Create tenant using queryRunner
       const tenant = await this.tenantsService.create(
         {

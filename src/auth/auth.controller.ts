@@ -51,7 +51,7 @@ export class AuthController {
     description: 'Registration successful',
     schema: RegisterResponseSchema,
   })
-  @ApiResponse({ status: 409, description: 'Subdomain already taken' })
+  @ApiResponse({ status: 409, description: 'Workspace already taken' })
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
