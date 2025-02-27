@@ -38,8 +38,8 @@ export class GlobalSettingsSeeder {
         },
         paymentSettings: {
           stripeEnabled: false,
-          stripePublicKey: '',
-          stripeSecretKey: '',
+          stripePublicKey: 'test',
+          stripeSecretKey: 'test',
           stripeWebhookSecret: '',
           paypalEnabled: false,
           paypalClientId: '',

@@ -9,6 +9,7 @@ import { Subscription } from '../subscriptions/entities/subscription.entity';
 import { SubscriptionPlan } from 'src/subscriptions/entities/subscription-plan.entity';
 import { Tenant } from 'src/tenants/entities/tenant.entity';
 import { User } from 'src/users/entities/user.entity';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class StripeService {
@@ -35,12 +36,18 @@ export class StripeService {
   private async getStripeSecretKey(): Promise<string> {
     const settings = await this.globalSettingRepository.find();
     const setting = settings[0];
+  
     if (
       !setting ||
       !setting.paymentSettings ||
       !setting.paymentSettings.stripeSecretKey
     ) {
+      console.warn(
+        '⚠️ Warning: Stripe secret key is missing. Using a random key for initialization.'
+      );
+      return randomBytes(32).toString('hex'); // Generate a random key
     }
+  
     return setting.paymentSettings.stripeSecretKey;
   }
   async cancelStripeSubscription(
@@ -91,6 +98,7 @@ export class StripeService {
       !setting.paymentSettings ||
       !setting.paymentSettings.stripeWebhookSecret
     ) {
+      throw new NotFoundException('Stripe webhook secret not found in global settings.');
     }
     return setting.paymentSettings.stripeWebhookSecret;
   }
@@ -132,9 +140,9 @@ export class StripeService {
       where: { email: customerEmail },
       relations: ['tenant'],
     });
-   if (!user) {
-        throw new NotFoundException(`User not found`);
-      }
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     if (!plan) {
       throw new NotFoundException('Subscription plan not found');
     }
