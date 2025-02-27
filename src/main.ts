@@ -12,7 +12,7 @@ async function bootstrap() {
   app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
   // Configure CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [process.env.FRONTEND_URL , 'http://localhost:3000'] ,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: [
