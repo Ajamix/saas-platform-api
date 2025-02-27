@@ -57,14 +57,12 @@ export class AuthService {
 
   private async validateUser(
     email: string,
-    tenantId: string,
     password: string,
   ): Promise<User | null> {
     try {
-      const user = await this.usersService.findByEmailAndTenant(
-        email,
-        tenantId,
-      );
+      const user = await this.userRepository.findOne({ where: { email ,tenant:{isActive:true},isActive:true}, relations: ['roles','roles.permissions','tenant'] ,
+         select: ['id','email','password','firstName','lastName','isActive','hasSetupProfile','tenant'] });
+        
       if (!user || Array.isArray(user)) {
         return null;
       }
@@ -108,24 +106,10 @@ export class AuthService {
       };
     }
 
-    // If not SuperAdmin, try tenant user login
-    if (!loginDto.subdomain) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
 
-    let tenant;
-    try {
-      tenant = await this.tenantsService.findBySubdomain(loginDto.subdomain);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new UnauthorizedException('Invalid tenant');
-      }
-      throw error;
-    }
 
     const user = await this.validateUser(
       loginDto.email,
-      tenant.id,
       loginDto.password,
     );
     if (!user) {
@@ -155,14 +139,14 @@ export class AuthService {
     const payload = {
       email: user.email,
       sub: user.id,
-      tenantId: tenant.id,
+      tenantId: user.tenant.id,
       hasSetupProfile: user.hasSetupProfile,
       permissions,
     };
 
     return {
       user,
-      tenant,
+      tenant:user.tenant,
       accessToken: this.jwtService.sign(payload, {
         secret: this.configService.get('JWT_SECRET'),
         expiresIn: this.configService.get('JWT_EXPIRATION'),
