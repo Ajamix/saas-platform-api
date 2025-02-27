@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
@@ -323,6 +323,6 @@ function calculateBillingCycles(subscription: Subscription): number {
       ) + 1
     );
   } else {
-    throw new Error('Unsupported interval type');
+    throw new NotFoundException('Unsupported interval type');
   }
 }

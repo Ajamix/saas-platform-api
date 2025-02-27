@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { join } from 'path';
 import { readFileSync, existsSync } from 'fs';
@@ -108,7 +108,7 @@ export class EmailTemplatesService implements OnModuleInit {
   renderTemplate(templateKey: string, context: Record<string, any>): string {
     const template = this.templates.get(templateKey);
     if (!template) {
-      throw new Error(`Template ${templateKey} not found`);
+      throw new NotFoundException(`Template ${templateKey} not found`);
     }
 
     const baseContext = {

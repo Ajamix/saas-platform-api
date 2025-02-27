@@ -91,7 +91,7 @@ export class TenantsService {
     });
 
     if (!existingUser) {
-      throw new Error(`User with ID ${user.id} not found`);
+      throw new NotFoundException(`User with ID ${user.id} not found`);
     }
 
     existingUser.roles = existingUser.roles || [];

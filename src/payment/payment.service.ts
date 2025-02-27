@@ -41,7 +41,6 @@ export class PaymentService implements OnModuleInit {
       return this.createPayPalSubscription(customerId, priceId);
     }
 
-    throw new Error(`Payment method ${paymentMethod} is not enabled`);
   }
 
   private async createStripeSubscription(customerId: string, priceId: string) {
@@ -55,7 +54,6 @@ export class PaymentService implements OnModuleInit {
 
   private async createPayPalSubscription(customerId: string, priceId: string) {
     // TODO: Implement PayPal subscription creation
-    throw new Error('PayPal subscriptions not implemented yet');
   }
 
   async cancelSubscription(options: {

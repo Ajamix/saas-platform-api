@@ -29,9 +29,7 @@ export class ProfilesService {
       where: { userId: user.id },
     });
 
-    if (existingProfile) {
-      throw new Error('Profile already exists for this user');
-    }
+
 
     // Create new profile
     const profile = this.profileRepository.create({

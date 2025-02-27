@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -40,7 +40,6 @@ export class StripeService {
       !setting.paymentSettings ||
       !setting.paymentSettings.stripeSecretKey
     ) {
-      throw new Error('Stripe secret key not found in global settings.');
     }
     return setting.paymentSettings.stripeSecretKey;
   }
@@ -92,7 +91,6 @@ export class StripeService {
       !setting.paymentSettings ||
       !setting.paymentSettings.stripeWebhookSecret
     ) {
-      throw new Error('Stripe webhook secret not found in global settings.');
     }
     return setting.paymentSettings.stripeWebhookSecret;
   }
@@ -134,11 +132,11 @@ export class StripeService {
       where: { email: customerEmail },
       relations: ['tenant'],
     });
-    if (!user) {
-      throw new Error('User not found');
-    }
+   if (!user) {
+        throw new NotFoundException(`User not found`);
+      }
     if (!plan) {
-      throw new Error('Subscription plan not found');
+      throw new NotFoundException('Subscription plan not found');
     }
 
     // Create a new Subscription entity
@@ -167,6 +165,6 @@ function calculateCurrentPeriodEnd(interval: string): Date {
   } else if (interval === 'yearly') {
     return new Date(currentDate.setFullYear(currentDate.getFullYear() + 1));
   } else {
-    throw new Error('Unsupported interval type');
+    throw new NotFoundException('Unsupported interval type');
   }
 }

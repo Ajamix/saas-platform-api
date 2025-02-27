@@ -23,9 +23,7 @@ export class NotificationsSseController {
     // Check origin against allowed origins
     const allowedOrigin =
       this.configService.get('FRONTEND_URL') || 'http://localhost:3000';
-    if (origin && origin !== allowedOrigin) {
-      throw new Error('Origin not allowed');
-    }
+ 
 
     return new Observable<MessageEvent>((subscriber) => {
       // Initial unread notifications
